@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   MemberIssue,
   MemberRecord,
@@ -19,10 +19,6 @@ interface ManagementPanelProps {
   issues: MemberIssue[];
   onClose: () => void;
   onNavigate: (memberId: string) => void;
-  onRestore: (memberId: string) => void;
-  onImportCsv: (file: File) => void;
-  onExportCsv: () => void;
-  onReset: () => void;
 }
 
 export function ManagementPanel({
@@ -31,14 +27,9 @@ export function ManagementPanel({
   relations,
   issues,
   onClose,
-  onNavigate,
-  onRestore,
-  onImportCsv,
-  onExportCsv,
-  onReset
+  onNavigate
 }: ManagementPanelProps) {
   const [view, setView] = useState<ManagementView>("home");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) setView("home");
@@ -144,7 +135,7 @@ export function ManagementPanel({
               />
               <ManagementMenuButton
                 label="숨긴 회원"
-                description="앱 목록에서 숨긴 회원 복원"
+                description="앱 목록에서 숨김 처리된 회원"
                 count={hiddenMembers.length}
                 tone="hidden"
                 onClick={() => setView("hidden")}
@@ -164,43 +155,6 @@ export function ManagementPanel({
               </div>
             </details>
 
-            <details className="data-tools">
-              <summary>CSV 테스트 도구</summary>
-              <div className="data-tools-body">
-                <p>
-                  Supabase 연결 전용입니다. 새 CSV로 교체하거나 현재 수정본을
-                  내보낼 수 있습니다.
-                </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv,text/csv"
-                  hidden
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) onImportCsv(file);
-                    event.currentTarget.value = "";
-                  }}
-                />
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  새 CSV 불러오기
-                </button>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={onExportCsv}
-                >
-                  현재 데이터 CSV로 저장
-                </button>
-                <button type="button" className="danger-button" onClick={onReset}>
-                  처음 샘플로 초기화
-                </button>
-              </div>
-            </details>
           </>
         ) : (
           <ManagementMemberList
@@ -211,7 +165,6 @@ export function ManagementPanel({
               onNavigate(memberId);
               onClose();
             }}
-            onRestore={onRestore}
           />
         )}
       </section>
@@ -251,14 +204,12 @@ function ManagementMemberList({
   view,
   members,
   issueMap,
-  onNavigate,
-  onRestore
+  onNavigate
 }: {
   view: Exclude<ManagementView, "home">;
   members: MemberRecord[];
   issueMap: Map<string, string[]>;
   onNavigate: (memberId: string) => void;
-  onRestore: (memberId: string) => void;
 }) {
   if (members.length === 0) {
     return <p className="management-empty">해당 회원이 없습니다.</p>;
@@ -286,15 +237,6 @@ function ManagementMemberList({
               <small>기존 메모: {member.sponsorNameRaw}</small>
             ) : null}
           </button>
-          {view === "hidden" ? (
-            <button
-              type="button"
-              className="restore-button"
-              onClick={() => onRestore(member.id)}
-            >
-              복원
-            </button>
-          ) : null}
         </article>
       ))}
     </div>

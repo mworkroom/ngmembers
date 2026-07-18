@@ -26,6 +26,7 @@ interface MemberCardProps {
   onNavigate: (memberId: string) => void;
   onEdit: (memberId: string) => void;
   onHide: (memberId: string) => void;
+  actionsDisabled?: boolean;
 }
 
 export function MemberCard({
@@ -36,7 +37,8 @@ export function MemberCard({
   onToggle,
   onNavigate,
   onEdit,
-  onHide
+  onHide,
+  actionsDisabled = false
 }: MemberCardProps) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     () => new Set()
@@ -213,6 +215,7 @@ export function MemberCard({
             <button
               type="button"
               className="secondary-button"
+              disabled={actionsDisabled}
               onClick={() => onEdit(member.id)}
             >
               수정
@@ -220,6 +223,7 @@ export function MemberCard({
             <button
               type="button"
               className="danger-button"
+              disabled={actionsDisabled}
               onClick={() => onHide(member.id)}
             >
               숨기기

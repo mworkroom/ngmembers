@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "../types/database";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
-const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
+const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL?.trim();
+const supabasePublishableKey = import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
 
 export const supabaseConfigError = getConfigError(
   supabaseUrl,
@@ -10,7 +11,7 @@ export const supabaseConfigError = getConfigError(
 
 export const supabase = supabaseConfigError
   ? null
-  : createClient(supabaseUrl!, supabasePublishableKey!, {
+  : createClient<Database>(supabaseUrl!, supabasePublishableKey!, {
       auth: {
         autoRefreshToken: true,
         detectSessionInUrl: true,

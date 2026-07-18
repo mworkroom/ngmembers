@@ -6,6 +6,7 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel: string;
   danger?: boolean;
+  pending?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -16,17 +17,18 @@ export function ConfirmDialog({
   message,
   confirmLabel,
   danger = false,
+  pending = false,
   onConfirm,
   onCancel
 }: ConfirmDialogProps) {
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCancel();
+      if (event.key === "Escape" && !pending) onCancel();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onCancel, open]);
+  }, [onCancel, open, pending]);
 
   if (!open) return null;
 
@@ -35,7 +37,7 @@ export function ConfirmDialog({
       className="dialog-backdrop"
       role="presentation"
       onMouseDown={(event) => {
-        if (event.currentTarget === event.target) onCancel();
+        if (event.currentTarget === event.target && !pending) onCancel();
       }}
     >
       <section
@@ -52,11 +54,17 @@ export function ConfirmDialog({
           <button
             type="button"
             className={danger ? "danger-button" : "primary-button"}
+            disabled={pending}
             onClick={onConfirm}
           >
-            {confirmLabel}
+            {pending ? "처리 중" : confirmLabel}
           </button>
-          <button type="button" className="secondary-button" onClick={onCancel}>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={pending}
+            onClick={onCancel}
+          >
             취소
           </button>
         </div>

@@ -1,0 +1,4 @@
+member_number,name,nickname,is_anchor_member,sponsor_name_raw,side,birth_date,phone,country_code,cpf,notes,member_status,is_favorite,is_hidden
+900000001,가상 회원 하나,가상하나,TRUE,,,19900101,01000000001,KR,,가짜 fixture,active,FALSE,FALSE
+900000002,가상 회원 둘,가상둘,FALSE,가상하나,좌,19920229,,BR,,,active,TRUE,FALSE
+900000003,가상 회원 셋,가상셋,FALSE,900000002,우,,,US,,,review,FALSE,TRUE

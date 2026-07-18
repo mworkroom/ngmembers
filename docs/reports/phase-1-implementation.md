@@ -43,7 +43,7 @@
 - 공용 workspace schema의 다른 역할을 깨뜨리지 않도록 role 컬럼 전체를 Admin으로 제한하지 않고, ngmembers helper에서만 Admin을 요구한다.
 - 실제 `workspace_members`에는 활성 상태 컬럼이 없음을 확인했다. 멤버십 행의 존재를 활성 접근으로 사용하고, 접근 회수는 해당 행 삭제로 처리하도록 `002_workspace_access.sql`을 수정했다.
 
-J님이 실제 project에서 `002_workspace_access.sql`을 처음 실행했을 때 기존 테이블에 없는 `is_active`를 참조해 PostgreSQL 42703 오류가 발생했다. 컬럼 목록을 확인한 뒤 `is_active`와 존재하지 않는 `updated_at` 의존성을 제거했다. 수정본 `002`부터 다시 실행해야 하며, 두 Auth UUID 등록과 RLS 라이브 검증은 아직 남아 있다.
+J님이 실제 project에서 `002_workspace_access.sql`을 처음 실행했을 때 기존 테이블에 없는 `is_active`를 참조해 PostgreSQL 42703 오류가 발생했다. 컬럼 목록을 확인한 뒤 `is_active`와 존재하지 않는 `updated_at` 의존성을 제거했고, 수정본 적용과 두 Admin 계정의 실제 동작 확인까지 완료했다.
 
 ## 실행한 검사
 

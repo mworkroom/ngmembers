@@ -136,7 +136,7 @@ export function collectMemberIssues(
   const issues: MemberIssue[] = [];
   for (const member of members) {
     if (member.isHidden) continue;
-    const reasons = [...(member.importWarnings ?? [])];
+    const reasons: string[] = [];
 
     if (!member.memberNumber) reasons.push("회원번호가 없습니다.");
     if (!member.name) reasons.push("가입 이름이 없습니다.");

@@ -1,6 +1,6 @@
-# Phase 1 Supabase 적용 안내
+# Supabase 적용 안내
 
-이 디렉터리는 실제 회원 CSV를 넣지 않고 schema, 워크스페이스 접근, RLS만 준비한다. SQL은 파일명 순서대로 Supabase SQL Editor에서 실행한다.
+이 디렉터리는 실제 회원 CSV를 넣지 않고 schema, 워크스페이스 접근, RLS와 단계별 migration을 관리한다. 새 project 설치 SQL은 파일명 순서대로 실행하고, 기존 production 보정은 `migrations/`의 승인된 파일만 별도로 적용한다.
 
 ## 1. 적용 전 확인
 
@@ -108,3 +108,37 @@ VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
 프론트엔드는 `sb_secret_` key와 legacy JWT의 `service_role` claim을 감지하면 회원 화면을 열지 않는다.
+
+## 7. Phase 2 최초 import
+
+Phase 2 production 반영은 validation 오류 0건, 모든 경고 범주 승인, 공유 project backup, 대상 project ref와 `members = 0` 확인 후에만 진행한다.
+
+1. 빈 검증 DB에서 `004_phase2_import_rpc.sql`과 `tests/phase2_import_rollback.sql`로 가짜 rollback 경로를 확인한다.
+2. production 대상에 `004_phase2_import_rpc.sql`을 적용한다. 이미 레거시 claim 검사가 포함된 004를 적용했다면 이어서 `004a_phase2_import_rpc_secret_key_compat.sql`을 적용한다.
+3. `.env.import.example`을 `.env.import.local`로 복사하고 service role 값을 로컬에만 설정한다.
+4. 승인된 source/prepared hash와 project ref를 모두 전달해 `npm run members:import -- --apply ...`를 한 번 실행한다.
+5. 반환된 행·관계·분포 집계, Admin SELECT와 DELETE 차단을 확인한다.
+6. `005_phase2_remove_import_rpc.sql`을 적용해 일회성 endpoint를 제거한다.
+7. `.env.import.local`의 service role key를 제거하고 필요하면 key를 rotate한다.
+
+RPC는 호출 시작 시 `members`를 exclusive lock하고 0행이 아니면 중단한다. 기본 행 insert와 `affiliation_id`/`side` update, 최종 집계 확인은 한 PostgreSQL transaction에서 수행되므로 오류가 발생하면 부분 행이 남지 않는다. client script는 응답이 불명확한 실패를 자동 retry하지 않는다.
+
+## 8. Phase 3 권한 보정
+
+production 기준선은 `members` 1,378행, `affiliation_id` 관계 1,271건, 두 관계 cycle 0건이다. 현재 `authenticated`에 남아 있는 `TRUNCATE`, `REFERENCES`, `TRIGGER`를 제거하고 Data API에 필요한 `SELECT`, `INSERT`, `UPDATE`만 다시 부여하려면 다음 migration을 사용한다.
+
+```text
+supabase/migrations/20260718024656_phase3_members_access_hardening.sql
+```
+
+이 migration은 `affiliation_id`와 `direct_parent_id`의 간접 cycle을 차단하는 `SECURITY INVOKER` trigger도 추가한다. 관계가 설정되는 transaction은 advisory lock으로 직렬화해 서로 다른 두 row를 동시에 수정할 때의 cycle 검사 누락을 방지한다. production에는 아직 적용하지 않았으며 SQL diff 검토와 J님 승인 후 한 번만 적용한다.
+
+적용 전에는 기존 1,378행의 cycle 0건을 다시 확인한다. 격리된 빈 DB에서는 `supabase/tests/phase3_members_access_and_cycle.sql`로 최소 권한과 두 cycle 차단을 검사한다. 적용 후에는 다음을 다시 확인한다.
+
+- `authenticated`: SELECT·INSERT·UPDATE만 허용
+- `public`·`anon`: members table action 전부 차단
+- 기존 세 Admin RLS policy 유지
+- DELETE·TRUNCATE 실제 실패
+- Security Advisor와 Performance Advisor에서 이번 migration으로 생긴 새 경고 0건
+
+공유 project의 다른 앱에서 이미 존재하는 Advisor 경고는 ngmembers migration과 분리해 다루며 임의로 수정하지 않는다.

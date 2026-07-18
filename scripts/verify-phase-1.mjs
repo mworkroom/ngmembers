@@ -67,8 +67,10 @@ if (existsSync(rlsSqlPath)) {
   if (/create\s+policy[\s\S]*?for\s+delete/.test(rlsSql)) {
     failures.push("members DELETE policy가 정의되어 있음");
   }
-  if (!/revoke\s+delete\s+on\s+public\.members\s+from\s+public,\s*anon,\s*authenticated/.test(rlsSql)) {
-    failures.push("authenticated DELETE 권한 회수가 없음");
+  const revokesDelete = /revoke\s+delete\s+on\s+public\.members\s+from\s+public,\s*anon,\s*authenticated/.test(rlsSql);
+  const revokesAll = /revoke\s+all\s+on\s+table\s+public\.members\s+from\s+public,\s*anon,\s*authenticated/.test(rlsSql);
+  if (!revokesDelete && !revokesAll) {
+    failures.push("authenticated DELETE 포함 권한 회수가 없음");
   }
 }
 

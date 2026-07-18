@@ -16,8 +16,9 @@ interface MemberEditorProps {
   member: MemberRecord | null;
   members: MemberRecord[];
   relations: RelationIndex;
+  pending: boolean;
   onClose: () => void;
-  onSave: (state: MemberFormState) => void;
+  onSave: (state: MemberFormState) => Promise<void>;
 }
 
 const statusOptions = [
@@ -30,6 +31,7 @@ export function MemberEditor({
   member,
   members,
   relations,
+  pending,
   onClose,
   onSave
 }: MemberEditorProps) {
@@ -46,11 +48,11 @@ export function MemberEditor({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !pending) onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, pending]);
 
   const unresolvedHint = useMemo(() => {
     if (state.affiliationId || !state.sponsorNameRaw) return "";
@@ -62,7 +64,7 @@ export function MemberEditor({
       className="editor-backdrop"
       role="presentation"
       onMouseDown={(event) => {
-        if (event.currentTarget === event.target) onClose();
+        if (event.currentTarget === event.target && !pending) onClose();
       }}
     >
       <section
@@ -83,6 +85,7 @@ export function MemberEditor({
             type="button"
             className="icon-button"
             aria-label="닫기"
+            disabled={pending}
             onClick={onClose}
           >
             <CloseIcon />
@@ -99,21 +102,20 @@ export function MemberEditor({
               return;
             }
             setError("");
-            onSave(state);
+            void onSave(state);
           }}
         >
           <section className="form-section">
             <h3>기본 정보</h3>
             <div className="form-grid two-columns">
               <label>
-                <span className="field-label">회원번호 *</span>
+                <span className="field-label">회원번호</span>
                 <input
                   value={state.memberNumber}
                   type="text"
                   inputMode="numeric"
                   autoComplete="off"
                   maxLength={24}
-                  required
                   autoFocus={!isEditing}
                   onChange={(event) =>
                     patch({ memberNumber: onlyDigits(event.target.value) })
@@ -146,12 +148,11 @@ export function MemberEditor({
             </div>
 
             <label>
-              <span className="field-label">가입 이름 *</span>
+              <span className="field-label">가입 이름</span>
               <input
                 value={state.name}
                 type="text"
                 autoComplete="off"
-                required
                 onChange={(event) => patch({ name: event.target.value })}
               />
             </label>
@@ -337,10 +338,15 @@ export function MemberEditor({
           ) : null}
 
           <div className="editor-actions">
-            <button type="submit" className="primary-button">
-              저장
+            <button type="submit" className="primary-button" disabled={pending}>
+              {pending ? "저장 중" : "저장"}
             </button>
-            <button type="button" className="secondary-button" onClick={onClose}>
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={pending}
+              onClick={onClose}
+            >
               취소
             </button>
           </div>
@@ -407,9 +413,10 @@ function validateForm(
   member: MemberRecord | null,
   members: MemberRecord[]
 ): string {
-  if (!state.memberNumber) return "회원번호를 입력해주세요.";
-  if (!state.name.trim()) return "가입 이름을 입력해주세요.";
-  if (!isValidNickname(state.nickname)) {
+  if (state.memberNumber && !/^\d+$/.test(state.memberNumber)) {
+    return "회원번호는 숫자만 입력해주세요.";
+  }
+  if (state.nickname !== (member?.nickname ?? "") && !isValidNickname(state.nickname)) {
     return "닉네임은 한글 두 글자 이상으로 입력해주세요.";
   }
   if (state.birthDate && state.birthDate.length !== 8) {
@@ -418,11 +425,13 @@ function validateForm(
   if (state.countryCode && !/^[A-Z]{2}$/.test(state.countryCode)) {
     return "국가 코드는 영문 두 글자로 입력해주세요.";
   }
-  const duplicate = members.find(
-    (candidate) =>
-      candidate.id !== member?.id &&
-      candidate.memberNumber === state.memberNumber
-  );
+  const duplicate = state.memberNumber
+    ? members.find(
+        (candidate) =>
+          candidate.id !== member?.id &&
+          candidate.memberNumber === state.memberNumber
+      )
+    : undefined;
   if (duplicate) return "같은 회원번호가 이미 있습니다.";
   if (state.affiliationId && state.affiliationId === member?.id) {
     return "자기 자신을 소속 회원으로 선택할 수 없습니다.";

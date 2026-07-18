@@ -237,6 +237,57 @@ button {
   font-weight: 800;
 }
 
+.list-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.data-error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e6c9a6;
+  border-radius: var(--radius);
+  background: #fff8ed;
+  color: #7c4b13;
+  font-size: 13px;
+}
+
+.data-error-banner button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.member-data-state {
+  display: grid;
+  min-height: 260px;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--muted);
+  text-align: center;
+}
+
+.member-data-state strong {
+  color: var(--text);
+  font-size: 17px;
+}
+
+.member-data-state .primary-button {
+  margin-top: 8px;
+}
+
 .member-list {
   display: grid;
   gap: 10px;
@@ -669,6 +720,11 @@ button {
 
 .danger-button:hover {
   background: #ffe4e4;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .empty-state {

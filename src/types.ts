@@ -21,7 +21,8 @@ export interface MemberRecord {
   notes: string;
   status: MemberStatus;
   isHidden: boolean;
-  importWarnings?: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MemberFormState {

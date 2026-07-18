@@ -7,13 +7,9 @@ import { MemberCard } from "./components/MemberCard";
 import { MemberEditor } from "./components/MemberEditor";
 import { SearchBar } from "./components/SearchBar";
 import { Toast } from "./components/Toast";
-import { clearStoredMembers, getSeedMembers, loadMembers, saveMembers } from "./lib/storage";
-import type {
-  MainFilter,
-  MemberFormState,
-  MemberRecord
-} from "./types";
-import { exportMembersToCsv, importMembersFromCsv } from "./utils/csv";
+import { useMembers } from "./hooks/useMembers";
+import { clearLegacyMemberStorage } from "./lib/legacyStorageCleanup";
+import type { MainFilter, MemberFormState, MemberRecord } from "./types";
 import {
   compareMemberNumbers,
   displayName,
@@ -33,14 +29,9 @@ interface AppProps {
   onSignOut: () => Promise<void>;
 }
 
-type ConfirmState =
-  | { kind: "hide"; memberId: string }
-  | { kind: "reset" }
-  | { kind: "import"; members: MemberRecord[]; warnings: string[] }
-  | null;
+type ConfirmState = { kind: "hide"; memberId: string } | null;
 
 export default function App({ role, onSignOut }: AppProps) {
-  const [members, setMembers] = useState<MemberRecord[]>(loadMembers);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<MainFilter>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -48,6 +39,10 @@ export default function App({ role, onSignOut }: AppProps) {
   const [managementOpen, setManagementOpen] = useState(false);
   const [confirmState, setConfirmState] = useState<ConfirmState>(null);
   const [toast, setToast] = useState("");
+  const memberState = useMembers({
+    autoRefreshEnabled: editorMode === null && confirmState === null
+  });
+  const members = memberState.members;
 
   const relations = useMemo(() => buildRelationIndex(members), [members]);
   const issues = useMemo(
@@ -105,15 +100,13 @@ export default function App({ role, onSignOut }: AppProps) {
     editorMode && editorMode !== "new"
       ? relations.memberById.get(editorMode) ?? null
       : null;
+  const writePending = memberState.pendingAction !== null;
 
   useEffect(() => {
     document.documentElement.lang = "ko";
     document.title = "회원 계보 찾기";
+    clearLegacyMemberStorage();
   }, []);
-
-  useEffect(() => {
-    saveMembers(members);
-  }, [members]);
 
   useEffect(() => {
     if (!toast) return;
@@ -149,66 +142,110 @@ export default function App({ role, onSignOut }: AppProps) {
         onManage={() => setManagementOpen(true)}
         onSignOut={onSignOut}
         role={role}
+        dataActionsDisabled={memberState.status !== "ready" || writePending}
       />
 
-      <SearchBar value={query} onChange={setQuery} />
-      <FilterTabs value={filter} counts={filterCounts} onChange={setFilter} />
+      {memberState.status === "loading" ? (
+        <MemberDataState
+          title="회원 데이터를 불러오는 중입니다."
+          description="전체 회원과 관계를 확인한 뒤 목록을 표시합니다."
+        />
+      ) : memberState.status === "error" ? (
+        <MemberDataState
+          title="회원 데이터를 불러오지 못했습니다."
+          description={memberState.errorMessage ?? "잠시 후 다시 시도해주세요."}
+          onRetry={() => void memberState.retry()}
+        />
+      ) : (
+        <>
+          <SearchBar value={query} onChange={setQuery} />
+          <FilterTabs value={filter} counts={filterCounts} onChange={setFilter} />
 
-      <div className="list-meta" aria-live="polite">
-        <span>{query ? `검색 결과 ${filteredMembers.length}명` : `${filteredMembers.length}명`}</span>
-        {query ? (
-          <button type="button" onClick={() => setQuery("")}>
-            검색 해제
-          </button>
-        ) : null}
-      </div>
+          {memberState.errorMessage ? (
+            <div className="data-error-banner" role="alert">
+              <span>{memberState.errorMessage}</span>
+              <button type="button" onClick={() => void memberState.refresh()}>
+                다시 확인
+              </button>
+            </div>
+          ) : null}
 
-      <section className="member-list" aria-label="회원 목록">
-        {filteredMembers.length > 0 ? (
-          filteredMembers.map((member) => (
-            <MemberCard
-              key={member.id}
-              member={member}
-              expanded={expandedId === member.id}
-              relations={relations}
-              issueReasons={issueMap.get(member.id) ?? []}
-              onToggle={(memberId) =>
-                setExpandedId((current) => (current === memberId ? null : memberId))
-              }
-              onNavigate={navigateToMember}
-              onEdit={(memberId) => setEditorMode(memberId)}
-              onHide={(memberId) => setConfirmState({ kind: "hide", memberId })}
-            />
-          ))
-        ) : (
-          <div className="empty-state">
-            <strong>검색 결과가 없습니다.</strong>
-            <span>회원번호나 닉네임을 다시 확인해주세요.</span>
+          <div className="list-meta" aria-live="polite">
+            <span>
+              {query
+                ? "검색 결과 " + filteredMembers.length + "명"
+                : filteredMembers.length + "명"}
+            </span>
+            <div className="list-meta-actions">
+              {query ? (
+                <button type="button" onClick={() => setQuery("")}>
+                  검색 해제
+                </button>
+              ) : null}
+              <button
+                type="button"
+                disabled={memberState.isRefreshing || writePending}
+                onClick={() => void memberState.refresh()}
+              >
+                {memberState.isRefreshing ? "새로고침 중" : "새로고침"}
+              </button>
+            </div>
           </div>
-        )}
-      </section>
 
-      {editorMode ? (
+          <section className="member-list" aria-label="회원 목록">
+            {filteredMembers.length > 0 ? (
+              filteredMembers.map((member) => (
+                <MemberCard
+                  key={member.id}
+                  member={member}
+                  expanded={expandedId === member.id}
+                  relations={relations}
+                  issueReasons={issueMap.get(member.id) ?? []}
+                  actionsDisabled={writePending}
+                  onToggle={(memberId) =>
+                    setExpandedId((current) =>
+                      current === memberId ? null : memberId
+                    )
+                  }
+                  onNavigate={navigateToMember}
+                  onEdit={(memberId) => setEditorMode(memberId)}
+                  onHide={(memberId) =>
+                    setConfirmState({ kind: "hide", memberId })
+                  }
+                />
+              ))
+            ) : (
+              <div className="empty-state">
+                <strong>검색 결과가 없습니다.</strong>
+                <span>회원번호나 닉네임을 다시 확인해주세요.</span>
+              </div>
+            )}
+          </section>
+        </>
+      )}
+
+      {memberState.status === "ready" && editorMode ? (
         <MemberEditor
           member={editingMember}
           members={pickerMembers}
           relations={relations}
+          pending={
+            memberState.pendingAction?.kind === "create" ||
+            (memberState.pendingAction?.kind === "update" &&
+              memberState.pendingAction.memberId === editingMember?.id)
+          }
           onClose={() => setEditorMode(null)}
           onSave={saveMember}
         />
       ) : null}
 
       <ManagementPanel
-        open={managementOpen}
+        open={memberState.status === "ready" && managementOpen}
         members={members}
         relations={relations}
         issues={issues}
         onClose={() => setManagementOpen(false)}
         onNavigate={navigateToMember}
-        onRestore={restoreMember}
-        onImportCsv={importCsvFile}
-        onExportCsv={exportCsvFile}
-        onReset={() => setConfirmState({ kind: "reset" })}
       />
 
       <ConfirmDialog
@@ -217,30 +254,8 @@ export default function App({ role, onSignOut }: AppProps) {
         message="회원은 삭제되지 않고 관리 화면의 숨긴 회원에 보관됩니다."
         confirmLabel="숨기기"
         danger
-        onConfirm={confirmHide}
-        onCancel={() => setConfirmState(null)}
-      />
-
-      <ConfirmDialog
-        open={confirmState?.kind === "reset"}
-        title="처음 샘플로 되돌릴까요?"
-        message="브라우저에서 수정한 내용이 모두 사라지고 첨부 CSV의 초기 상태로 돌아갑니다."
-        confirmLabel="초기화"
-        danger
-        onConfirm={confirmReset}
-        onCancel={() => setConfirmState(null)}
-      />
-
-      <ConfirmDialog
-        open={confirmState?.kind === "import"}
-        title="새 CSV로 교체할까요?"
-        message={
-          confirmState?.kind === "import"
-            ? `${confirmState.members.length}명의 데이터로 현재 브라우저 데이터를 교체합니다.`
-            : ""
-        }
-        confirmLabel="CSV 교체"
-        onConfirm={confirmImport}
+        pending={memberState.pendingAction?.kind === "hide"}
+        onConfirm={() => void confirmHide()}
         onCancel={() => setConfirmState(null)}
       />
 
@@ -252,23 +267,27 @@ export default function App({ role, onSignOut }: AppProps) {
     const member = relations.memberById.get(memberId);
     if (!member) return;
     if (member.isHidden) {
-      setToast("숨긴 회원입니다. 관리 화면에서 먼저 복원해주세요.");
+      setToast("숨김 처리된 회원입니다.");
       return;
     }
 
+    focusMember(member);
+    setManagementOpen(false);
+  }
+
+  function focusMember(member: MemberRecord) {
     setFilter("all");
     setQuery(member.memberNumber || member.name || member.nickname);
     setExpandedId(member.id);
-    setManagementOpen(false);
 
     window.setTimeout(() => {
       document
-        .getElementById(`member-${member.id}`)
+        .getElementById("member-" + member.id)
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
   }
 
-  function saveMember(state: MemberFormState) {
+  async function saveMember(state: MemberFormState) {
     if (editingMember) {
       if (
         wouldCreateCycle(editingMember.id, state.affiliationId, relations) ||
@@ -278,134 +297,85 @@ export default function App({ role, onSignOut }: AppProps) {
         return;
       }
 
-      const affiliation = state.affiliationId
-        ? relations.memberById.get(state.affiliationId)
-        : null;
-      setMembers((current) =>
-        current.map((member) =>
-          member.id === editingMember.id
-            ? {
-                ...member,
-                ...state,
-                name: state.name.trim(),
-                nickname: state.nickname.trim(),
-                countryCode: state.countryCode.trim().toUpperCase(),
-                sponsorNameRaw: affiliation
-                  ? affiliation.nickname || affiliation.name || affiliation.memberNumber
-                  : state.sponsorNameRaw,
-                importWarnings: []
-              }
-            : member
-        )
+      const result = await memberState.updateMember(
+        editingMember.id,
+        editingMember.updatedAt,
+        withSponsorName(state)
       );
+      if (!result.ok) {
+        setToast(result.message);
+        return;
+      }
+
       setEditorMode(null);
       setToast("회원 정보를 수정했습니다.");
-      window.setTimeout(() => navigateToMember(editingMember.id), 20);
+      window.setTimeout(() => focusMember(result.member), 20);
       return;
     }
 
-    const id = `local-${crypto.randomUUID()}`;
+    const result = await memberState.createMember(withSponsorName(state));
+    if (!result.ok) {
+      setToast(result.message);
+      return;
+    }
+
+    setEditorMode(null);
+    setToast("새 회원을 추가했습니다.");
+    window.setTimeout(() => focusMember(result.member), 20);
+  }
+
+  function withSponsorName(state: MemberFormState): MemberFormState {
     const affiliation = state.affiliationId
       ? relations.memberById.get(state.affiliationId)
       : null;
-    const newMember: MemberRecord = {
-      id,
+    return {
       ...state,
-      name: state.name.trim(),
-      nickname: state.nickname.trim(),
-      countryCode: state.countryCode.trim().toUpperCase(),
       sponsorNameRaw: affiliation
         ? affiliation.nickname || affiliation.name || affiliation.memberNumber
-        : "",
-      isHidden: false,
-      importWarnings: []
+        : state.sponsorNameRaw
     };
-    setMembers((current) => [...current, newMember]);
-    setEditorMode(null);
-    setToast("새 회원을 추가했습니다.");
-    window.setTimeout(() => {
-      setFilter("all");
-      setQuery(newMember.memberNumber);
-      setExpandedId(id);
-    }, 20);
   }
 
-  function confirmHide() {
+  async function confirmHide() {
     if (confirmState?.kind !== "hide") return;
-    const memberId = confirmState.memberId;
-    setMembers((current) =>
-      current.map((member) =>
-        member.id === memberId ? { ...member, isHidden: true } : member
-      )
-    );
+    const member = relations.memberById.get(confirmState.memberId);
+    if (!member) {
+      setConfirmState(null);
+      return;
+    }
+
+    const result = await memberState.hideMember(member.id, member.updatedAt);
+    if (!result.ok) {
+      setToast(result.message);
+      return;
+    }
+
     setExpandedId(null);
     setConfirmState(null);
     setToast("회원이 숨김 처리되었습니다.");
   }
+}
 
-  function restoreMember(memberId: string) {
-    setMembers((current) =>
-      current.map((member) =>
-        member.id === memberId ? { ...member, isHidden: false } : member
-      )
-    );
-    setToast("숨긴 회원을 복원했습니다.");
-  }
-
-  async function importCsvFile(file: File) {
-    try {
-      const text = await file.text();
-      const result = importMembersFromCsv(text);
-      setConfirmState({
-        kind: "import",
-        members: result.members,
-        warnings: result.warnings
-      });
-    } catch (error) {
-      setToast(error instanceof Error ? error.message : "CSV를 읽지 못했습니다.");
-    }
-  }
-
-  function confirmImport() {
-    if (confirmState?.kind !== "import") return;
-    const { members: imported, warnings } = confirmState;
-    setMembers(imported);
-    setQuery("");
-    setFilter("all");
-    setExpandedId(null);
-    setConfirmState(null);
-    setManagementOpen(false);
-    setToast(
-      warnings.length > 0
-        ? `${imported.length}명 불러옴 · ${warnings.join(" ")}`
-        : `${imported.length}명을 불러왔습니다.`
-    );
-  }
-
-  function exportCsvFile() {
-    const csv = exportMembersToCsv(members);
-    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `members-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-    setToast("현재 데이터를 CSV로 저장했습니다.");
-  }
-
-  function confirmReset() {
-    clearStoredMembers();
-    setMembers(getSeedMembers());
-    setQuery("");
-    setFilter("all");
-    setExpandedId(null);
-    setConfirmState(null);
-    setManagementOpen(false);
-    setToast("처음 샘플 데이터로 초기화했습니다.");
-  }
+function MemberDataState({
+  title,
+  description,
+  onRetry
+}: {
+  title: string;
+  description: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <section className="member-data-state" aria-live="polite">
+      <strong>{title}</strong>
+      <span>{description}</span>
+      {onRetry ? (
+        <button type="button" className="primary-button" onClick={onRetry}>
+          다시 시도
+        </button>
+      ) : null}
+    </section>
+  );
 }
 
 function getSearchRank(
@@ -432,7 +402,12 @@ function getSearchRank(
     .map(normalizeSearch)
     .filter(Boolean);
   const haystack = normalizeSearch(
-    `${member.memberNumber} ${member.name} ${member.nickname} ${member.phone}`
+    [
+      member.memberNumber,
+      member.name,
+      member.nickname,
+      member.phone
+    ].join(" ")
   );
   if (tokens.length > 0 && tokens.every((token) => haystack.includes(token))) return 8;
   if (nickname.includes(normalizedQuery)) return 9;

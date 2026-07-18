@@ -8,7 +8,7 @@
 - build, CSV, 개인정보, 웹폰트 문제 확인
 - public 저장소를 새로 초기화
 
-## Phase 1 — 안전한 기반과 로그인
+## Phase 1 — 안전한 기반과 로그인 ✅
 
 - 실제 개인정보와 과거 bundle 제거
 - 정상 Vite build 복구
@@ -17,7 +17,7 @@
 - ngmembers workspace `00000000-0000-0000-0000-000000000003` 연결
 - 아직 최종 회원 데이터는 넣지 않음
 
-## Phase 2 — 최종 CSV 이전
+## Phase 2 — 최종 CSV 이전 ✅
 
 - CSV 오류·경고 재검사
 - 빈 값은 `NULL`로 변환
@@ -25,7 +25,7 @@
 - sponsor 관계 연결 결과 확인
 - J님 승인 후 production import
 
-## Phase 3 — 앱을 실제 DB에 연결
+## Phase 3 — 앱을 실제 DB에 연결 🚧
 
 - localStorage와 seed 제거
 - 회원 조회·추가·수정·숨김 연결
@@ -49,5 +49,5 @@
 - PC·iPhone·iPad 실사용 확인
 
 ```text
-현재 위치: Phase 1 완료 → Phase 2 CSV 보정·이전 준비
+현재 위치: Phase 3 로컬 구현·자동 검사 완료 → production migration·두 Admin 실사용 검증 대기
 ```

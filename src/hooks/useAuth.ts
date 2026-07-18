@@ -54,6 +54,7 @@ export function useAuth(): AuthState {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!active) return;
+      setAccessStatus(nextSession ? "checking" : "idle");
       setSession(nextSession);
       setSessionReady(true);
       setMessage(null);

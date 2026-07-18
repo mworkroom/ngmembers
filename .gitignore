@@ -1,0 +1,26 @@
+# Personal notes / local-only references
+docs/ideas/
+docs/project specs/
+
+# Local source assets / private member data
+*.psd
+/assets/
+/data/*.csv
+/src/data/*.json
+/ngmembers*.csv
+/reports/
+/docs/reports/private/
+/scripts/pii-markers.local.txt
+
+# Local Supabase and environment configuration
+.env
+.env.*
+!.env.example
+/supabase/.branches/
+/supabase/.temp/
+
+# Node.js / Vite / Vitest generated files
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo

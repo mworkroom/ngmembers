@@ -45,4 +45,4 @@ npm run build
 npm run verify:phase1
 ```
 
-안전 검사는 제거 대상 파일, secret/service role key 형태, 과거 Git seed에 있던 식별 문자열의 현재 source/dist 잔존 여부, DELETE 정책 부재를 확인한다. 기존 Git history 자체의 정리는 별도 승인과 새 안전 이력 생성 절차가 필요하다.
+안전 검사는 제거 대상 파일, secret/service role key 형태, DELETE 정책 부재를 확인한다. 안전한 root history 생성 전에는 과거 Git seed의 식별 문자열 5,410개도 source/dist와 대조했다. history 정리 후 추가 PII 대조가 필요하면 ignore된 `scripts/pii-markers.local.txt`에 한 줄당 marker 하나를 로컬에서만 작성한다.

@@ -49,5 +49,5 @@
 - PC·iPhone·iPad 실사용 확인
 
 ```text
-현재 위치: Phase 1 로컬 구현·안전 검사 완료 → Supabase/OAuth/RLS 라이브 검증 대기
+현재 위치: Phase 1 완료 → Phase 2 CSV 보정·이전 준비
 ```

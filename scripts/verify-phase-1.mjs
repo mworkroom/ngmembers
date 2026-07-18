@@ -47,7 +47,9 @@ for (const file of textFiles) {
   }
 }
 
-const piiMarkers = loadHistoricalMarkers();
+const historicalMarkers = loadHistoricalMarkers();
+const localMarkers = loadLocalMarkers();
+const piiMarkers = deduplicateMarkers([...historicalMarkers, ...localMarkers]);
 if (piiMarkers.length > 0) {
   for (const file of textFiles) {
     const content = readFileSync(file, "utf8");
@@ -76,7 +78,12 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Phase 1 안전 검사 통과 (${textFiles.length}개 파일, PII marker ${piiMarkers.length}개)`);
+const markerSource = historicalMarkers.length > 0
+  ? `과거 Git seed ${historicalMarkers.length}개`
+  : localMarkers.length > 0
+    ? `로컬 marker ${localMarkers.length}개`
+    : "PII baseline 없음";
+console.log(`Phase 1 안전 검사 통과 (${textFiles.length}개 파일, ${markerSource})`);
 
 function walk(directory, ignoredNames) {
   const files = [];
@@ -143,6 +150,26 @@ function loadHistoricalMarkers() {
   } catch {
     return [];
   }
+}
+
+function loadLocalMarkers() {
+  const markerPath = join(root, "scripts/pii-markers.local.txt");
+  if (!existsSync(markerPath)) return [];
+
+  return readFileSync(markerPath, "utf8")
+    .split(/\r?\n/)
+    .map((value) => value.trim())
+    .filter((value) => value.length >= 3 && !value.startsWith("#"))
+    .map((value) => ({ field: "local marker", value }));
+}
+
+function deduplicateMarkers(markers) {
+  const seen = new Set();
+  return markers.filter((marker) => {
+    if (seen.has(marker.value)) return false;
+    seen.add(marker.value);
+    return true;
+  });
 }
 
 function getJwtRole(token) {

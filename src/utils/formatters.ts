@@ -34,7 +34,18 @@ export function displayName(member: MemberRecord): string {
 export function countryLabel(code: string, compact = false): string {
   const normalized = code.trim().toUpperCase();
   if (!normalized) return compact ? "" : labels.member.countryUnknown;
-  return normalized;
+  if (compact) return normalized;
+  return (
+    labels.editor.countryOptions.find((option) => option.value === normalized)?.label ??
+    normalized
+  );
+}
+
+export function countryBadgeTone(code: string): "brazil" | "korea" | "other" {
+  const normalized = code.trim().toUpperCase();
+  if (normalized === "BR") return "brazil";
+  if (normalized === "KR") return "korea";
+  return "other";
 }
 
 export function statusLabel(status: MemberStatus): string {
@@ -132,7 +143,7 @@ export function formatMemberSubline(member: MemberRecord): string[] {
   if (member.nickname) parts.push(member.nickname);
   if (member.memberNumber) parts.push(member.memberNumber);
   const country = countryLabel(member.countryCode, true);
-  if (country) parts.push(`(${country})`);
+  if (country) parts.push(country);
   return parts;
 }
 

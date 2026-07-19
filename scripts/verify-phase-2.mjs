@@ -7,7 +7,6 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 
 const requiredPaths = [
-  ".env.import.example",
   "scripts/members/validate-members.ts",
   "scripts/members/prepare-members.ts",
   "scripts/members/import-members.ts",
@@ -24,7 +23,6 @@ for (const path of requiredPaths) {
 const gitIgnore = readFileSync(join(root, ".gitignore"), "utf8");
 if (!/^\/reports\/$/m.test(gitIgnore)) failures.push("reports/ 전체 ignore 규칙이 없음");
 if (!/^\.env\.\*$/m.test(gitIgnore)) failures.push("로컬 import 환경변수 ignore 규칙이 없음");
-if (!/^!\.env\.import\.example$/m.test(gitIgnore)) failures.push("import 환경 예시 추적 예외가 없음");
 
 const importSql = readFileSync(join(root, "supabase/004_phase2_import_rpc.sql"), "utf8");
 const secretKeyCompatSql = readFileSync(

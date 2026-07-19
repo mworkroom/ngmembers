@@ -15,8 +15,6 @@ docs/project specs/
 # Local Supabase and environment configuration
 .env
 .env.*
-!.env.example
-!.env.import.example
 /supabase/.branches/
 /supabase/.temp/
 

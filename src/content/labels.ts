@@ -32,13 +32,12 @@ export const labels = {
     country: "국가",
     countryHint: "목록에서 국가를 선택합니다.",
     nicknamePlaceholder: "한국어 두 글자 이상 포함",
+    nicknameHint: "한국어 두 글자 이상을 포함하면 영문·숫자·공백을 함께 사용할 수 있습니다.",
     countryOptions: [
       { value: "", label: "국가 선택" },
       { value: "KR", label: "한국" },
       { value: "BR", label: "브라질" },
       { value: "MX", label: "멕시코" },
-      { value: "BO", label: "볼리비아" },
-      { value: "US", label: "미국" },
       { value: "XX", label: "글로벌" }
     ]
   },

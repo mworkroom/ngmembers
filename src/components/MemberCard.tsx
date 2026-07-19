@@ -8,6 +8,7 @@ import type {
 import { labels } from "../content/labels";
 import {
   countryLabel,
+  countryBadgeTone,
   displayName,
   formatBirthDate,
   formatCpf,
@@ -65,6 +66,7 @@ export function MemberCard({
     (anchorPath.length === 1 && anchorPath[0].id !== affiliation?.id);
   const hasReview = member.status === "review" || issueReasons.length > 0;
   const infoRows = buildInfoRows(member);
+  const summaryParts = formatMemberSubline(member);
 
   return (
     <article
@@ -82,8 +84,17 @@ export function MemberCard({
             {displayName(member)}
           </strong>
           <span className="member-summary-meta">
-            {formatMemberSubline(member).map((part, index) => (
-              <span key={`${part}-${index}`}>{part}</span>
+            {summaryParts.map((part, index) => (
+              <span
+                key={`${part}-${index}`}
+                className={
+                  member.countryCode && index === summaryParts.length - 1
+                    ? `member-summary-country country-${countryBadgeTone(member.countryCode)}`
+                    : undefined
+                }
+              >
+                {part}
+              </span>
             ))}
             {member.notes ? (
               <span className="member-summary-notes" title={member.notes}>

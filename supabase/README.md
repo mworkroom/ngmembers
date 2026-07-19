@@ -100,7 +100,7 @@ returning id;
 
 ## 6. 환경변수
 
-`.env.example`을 `.env.local`로 복사하고 project URL과 publishable/anon key만 설정한다.
+`.env.local`을 로컬에서 직접 만들고 project URL과 publishable/anon key만 설정한다. 예시 환경변수 파일과 실제 key는 저장소에 두지 않는다.
 
 ```text
 VITE_SUPABASE_URL
@@ -115,7 +115,7 @@ Phase 2 production 반영은 validation 오류 0건, 모든 경고 범주 승인
 
 1. 빈 검증 DB에서 `004_phase2_import_rpc.sql`과 `tests/phase2_import_rollback.sql`로 가짜 rollback 경로를 확인한다.
 2. production 대상에 `004_phase2_import_rpc.sql`을 적용한다. 이미 레거시 claim 검사가 포함된 004를 적용했다면 이어서 `004a_phase2_import_rpc_secret_key_compat.sql`을 적용한다.
-3. `.env.import.example`을 `.env.import.local`로 복사하고 service role 값을 로컬에만 설정한다.
+3. `.env.import.local`을 로컬에서 직접 만들고 service role 값을 로컬에만 설정한다. 예시 환경변수 파일은 저장소에 두지 않는다.
 4. 승인된 source/prepared hash와 project ref를 모두 전달해 `npm run members:import -- --apply ...`를 한 번 실행한다.
 5. 반환된 행·관계·분포 집계, Admin SELECT와 DELETE 차단을 확인한다.
 6. `005_phase2_remove_import_rpc.sql`을 적용해 일회성 endpoint를 제거한다.
@@ -142,3 +142,17 @@ supabase/migrations/20260718024656_phase3_members_access_hardening.sql
 - Security Advisor와 Performance Advisor에서 이번 migration으로 생긴 새 경고 0건
 
 공유 project의 다른 앱에서 이미 존재하는 Advisor 경고는 ngmembers migration과 분리해 다루며 임의로 수정하지 않는다.
+
+## 9. Phase 5 최종 읽기 전용 감사
+
+`tests/phase5_security_audit.sql`은 production에서 실행할 수 있는 읽기 전용 감사 쿼리다. `members`에 임시 행을 만들거나 권한·schema를 변경하지 않는다. 결과에는 일반 세션의 SELECT·INSERT·UPDATE와 DELETE·TRUNCATE·REFERENCES·TRIGGER 차단, `members` policy, Admin access function execute, cycle trigger 보안 설정, 회원·관계·cycle count가 포함된다.
+
+기준선은 회원 1,378행, `affiliation_id` 관계 1,271건, 관계 cycle 0건이다. 값이 기준선과 다르면 원인을 확인하기 전에는 배포하지 않는다.
+
+## 10. 운영 중단·계정·key·rollback 절차
+
+- 운영 중단: GitHub Pages workflow를 중지하고 마지막 정상 deployment run과 commit을 기록한다. 새 배포는 `verify:phase5`가 통과한 승인 commit에서만 재개한다.
+- 계정 제거: Supabase Dashboard에서 `workspace_members`의 해당 membership 행을 SQL Editor로 제거한다. 이메일·UUID·secret을 이 저장소나 보고서에 기록하지 않는다.
+- key 교체: Supabase publishable key는 GitHub Variables와 local `.env.local`의 위치만 확인한 뒤 교체하고, service role·Google Client Secret은 각 관리 화면에서만 rotate한다. frontend bundle에 service role 값을 넣지 않는다.
+- rollback: Pages는 마지막 정상 artifact/commit으로 되돌리고, OAuth callback 또는 DNS 변경을 되돌릴 때는 이전 origin이 실제로 응답하는지 확인한 뒤 적용한다. 회원 data migration이나 DELETE로 rollback하지 않는다.
+- 외부 확인: custom domain DNS, HTTPS certificate, Supabase Site URL, Google OAuth redirect, 두 Admin 계정의 PC·iPhone·iPad smoke test는 별도 승인과 Dashboard/browser 접근 후 결과를 `docs/reports/phase-5-implementation.md`에 기록한다.

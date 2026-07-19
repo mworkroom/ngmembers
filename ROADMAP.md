@@ -33,7 +33,7 @@
 - 영구 삭제·복원은 앱에 만들지 않고 Supabase Dashboard에서 처리
 - 새로고침과 다른 기기에서도 같은 데이터 확인
 
-## Phase 4 — 최종 문구·UI·웹폰트
+## Phase 4 — 최종 문구·UI·웹폰트 ✅
 
 - 승인된 용어와 문구 반영
 - 카드 정보와 관리 화면 정리
@@ -49,5 +49,5 @@
 - PC·iPhone·iPad 실사용 확인
 
 ```text
-현재 위치: Phase 3 production 적용·실사용 검증 완료 → Phase 4 계획 완료·문구 승인 대기
+현재 위치: Phase 5 저장소 최종 gate·CI 연결 완료 → production domain·OAuth·기기 smoke test 대기
 ```

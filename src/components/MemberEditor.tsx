@@ -80,7 +80,6 @@ export function MemberEditor({
             <h2 id="member-editor-title">
               {isEditing ? "회원 정보 수정" : "새 회원 추가"}
             </h2>
-            <p>상위 회원은 직접 입력하지 않고 검색 결과에서 선택합니다.</p>
           </div>
           <button
             type="button"

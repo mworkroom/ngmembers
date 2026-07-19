@@ -7,7 +7,7 @@ import "./styles.css";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AuthGate>
-      {({ role, signOut }) => <App role={role} onSignOut={signOut} />}
+      {({ email, signOut }) => <App email={email} onSignOut={signOut} />}
     </AuthGate>
   </StrictMode>
 );

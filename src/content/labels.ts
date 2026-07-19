@@ -3,11 +3,11 @@ export const labels = {
     title: "회원 계보 찾기"
   },
   search: {
-    placeholder: "이름·닉네임·회원번호·전화번호·메모",
+    placeholder: "이름·닉네임·회원번호·메모·전화번호",
     ariaLabel: "회원 검색",
     clearAriaLabel: "검색어 지우기",
     emptyTitle: "검색 결과가 없습니다.",
-    emptyDescription: "이름·닉네임·회원번호·전화번호·메모를 다시 확인해주세요."
+    emptyDescription: "이름·닉네임·회원번호·메모·전화번호를 다시 확인해주세요."
   },
   filters: {
     ariaLabel: "회원 목록 필터",
@@ -30,9 +30,7 @@ export const labels = {
   },
   editor: {
     country: "국가",
-    countryHint: "목록에서 국가를 선택합니다.",
     nicknamePlaceholder: "한국어 두 글자 이상 포함",
-    nicknameHint: "한국어 두 글자 이상을 포함하면 영문·숫자·공백을 함께 사용할 수 있습니다.",
     countryOptions: [
       { value: "", label: "국가 선택" },
       { value: "KR", label: "한국" },

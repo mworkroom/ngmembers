@@ -93,6 +93,84 @@ button {
   gap: 7px;
 }
 
+.topbar-menu {
+  position: relative;
+}
+
+.topbar-menu summary {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 999px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.topbar-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.topbar-menu summary:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px white;
+}
+
+.topbar-menu summary img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.topbar-menu-panel {
+  position: absolute;
+  z-index: 45;
+  top: calc(100% + 10px);
+  right: 0;
+  display: grid;
+  gap: 8px;
+  width: min(280px, calc(100vw - 32px));
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.18);
+}
+
+.topbar-menu-panel button {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 800;
+  text-align: left;
+}
+
+.topbar-menu-panel button:hover {
+  background: var(--bg);
+}
+
+.topbar-menu-account {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.topbar-menu-account strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
 .topbar-button {
   display: inline-flex;
   align-items: center;
@@ -1304,22 +1382,6 @@ a:focus-visible {
   box-shadow: 0 0 0 4px rgba(37, 183, 232, 0.2);
 }
 
-.role-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 9px;
-  border: 1px solid rgba(255, 255, 255, 0.52);
-  border-radius: 999px;
-  color: white;
-  font-size: 11px;
-  font-weight: 850;
-}
-
-.topbar-signout {
-  color: rgba(255, 255, 255, 0.92);
-}
-
 .auth-shell {
   display: grid;
   min-height: 100vh;
@@ -1430,22 +1492,6 @@ a:focus-visible {
 
   .topbar-button-long {
     display: none;
-  }
-
-  .role-chip {
-    display: none;
-  }
-
-  .topbar-signout {
-    max-width: 42px;
-    overflow: hidden;
-    text-indent: -999px;
-  }
-
-  .topbar-signout::after {
-    content: "나가기";
-    display: block;
-    text-indent: 0;
   }
 
   .auth-shell {
@@ -1559,21 +1605,4 @@ a:focus-visible {
   .dialog-actions {
     grid-template-columns: 1fr;
   }
-}
-
-.relation-tools {
-  margin-top: 14px;
-  border-top: 1px solid var(--line);
-}
-
-.relation-tools > summary {
-  padding: 14px 2px 8px;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.relation-tools-body {
-  padding-top: 4px;
 }

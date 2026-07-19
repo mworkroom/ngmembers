@@ -3,7 +3,7 @@ import { useAuth } from "../hooks/useAuth";
 import { LoginScreen } from "./LoginScreen";
 
 interface AuthorizedContext {
-  role: "admin";
+  email: string | null;
   signOut: () => Promise<void>;
 }
 
@@ -15,7 +15,7 @@ export function AuthGate({ children }: AuthGateProps) {
   const auth = useAuth();
 
   if (auth.status === "authorized" && auth.role) {
-    return <>{children({ role: auth.role, signOut: auth.signOut })}</>;
+    return <>{children({ email: auth.email, signOut: auth.signOut })}</>;
   }
 
   return (

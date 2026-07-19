@@ -136,7 +136,6 @@ export function MemberEditor({
                     </option>
                   ))}
                 </select>
-                <small className="field-hint">{labels.editor.countryHint}</small>
               </label>
             </div>
 
@@ -159,7 +158,6 @@ export function MemberEditor({
                 placeholder={labels.editor.nicknamePlaceholder}
                 onChange={(event) => patch({ nickname: event.target.value })}
               />
-              <small className="field-hint">{labels.editor.nicknameHint}</small>
             </label>
 
             <div className="form-grid two-columns">

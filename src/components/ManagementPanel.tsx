@@ -71,7 +71,7 @@ export function ManagementPanel({
     issues: { title: "데이터 확인", members: issueMembers },
     withdrawn: { title: "탈퇴 회원", members: withdrawnMembers },
     hidden: { title: "숨긴 회원", members: hiddenMembers },
-    unresolved: { title: "스폰서 연결 미완료", members: unresolvedMembers }
+    unresolved: { title: "스폰서 정리 미완료", members: unresolvedMembers }
   } as const;
 
   return (
@@ -104,7 +104,6 @@ export function ManagementPanel({
             <h2 id="management-title">
               {view === "home" ? "회원 관리" : viewConfig[view].title}
             </h2>
-            {view === "home" ? <p>평소 검색 화면과 분리해둔 관리 도구입니다.</p> : null}
           </div>
           <button
             type="button"
@@ -140,21 +139,13 @@ export function ManagementPanel({
                 tone="hidden"
                 onClick={() => setView("hidden")}
               />
+              <ManagementMenuButton
+                label="스폰서 정리 미완료"
+                count={unresolvedMembers.length}
+                tone="muted"
+                onClick={() => setView("unresolved")}
+              />
             </div>
-
-            <details className="relation-tools">
-              <summary>스폰서 연결 정리</summary>
-              <div className="relation-tools-body">
-                <ManagementMenuButton
-                  label="스폰서 연결 미완료"
-                  description="기존 시트 메모는 그대로 보이며, 필요할 때만 연결합니다."
-                  count={unresolvedMembers.length}
-                  tone="muted"
-                  onClick={() => setView("unresolved")}
-                />
-              </div>
-            </details>
-
           </>
         ) : (
           <ManagementMemberList
@@ -180,7 +171,7 @@ function ManagementMenuButton({
   onClick
 }: {
   label: string;
-  description: string;
+  description?: string;
   count: number;
   tone: "review" | "withdrawn" | "hidden" | "muted";
   onClick: () => void;
@@ -193,7 +184,7 @@ function ManagementMenuButton({
     >
       <span>
         <strong>{label}</strong>
-        <small>{description}</small>
+        {description ? <small>{description}</small> : null}
       </span>
       <b>{count}</b>
     </button>

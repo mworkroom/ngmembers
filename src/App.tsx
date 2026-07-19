@@ -26,13 +26,13 @@ import {
 type EditorMode = "new" | string | null;
 
 interface AppProps {
-  role: "admin";
+  email: string | null;
   onSignOut: () => Promise<void>;
 }
 
 type ConfirmState = { kind: "hide"; memberId: string } | null;
 
-export default function App({ role, onSignOut }: AppProps) {
+export default function App({ email, onSignOut }: AppProps) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<MainFilter>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -140,7 +140,7 @@ export default function App({ role, onSignOut }: AppProps) {
         onAdd={() => setEditorMode("new")}
         onManage={() => setManagementOpen(true)}
         onSignOut={onSignOut}
-        role={role}
+        email={email}
         dataActionsDisabled={memberState.status !== "ready" || writePending}
       />
 

@@ -39,8 +39,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and verify final gate
-        run: npm run verify:phase5
+      - name: Build and verify deployment safety
+        run: npm run verify:deploy
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

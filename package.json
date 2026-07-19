@@ -18,7 +18,7 @@
     "verify:phase3": "npm run build && npm run test:phase3 && node scripts/verify-phase-3.mjs",
     "test:phase4": "tsx --test src/lib/__tests__/phase4.test.ts",
     "verify:phase4": "npm run build && npm run test:phase3 && npm run test:phase4",
-    "verify:phase5": "npm run verify:phase1 && npm run verify:phase2 && npm run verify:phase3 && npm run verify:phase4 && npm run build && node scripts/verify-phase-5.mjs"
+    "verify:phase5": "npm run build && npm run verify:phase1 && npm run verify:phase2 && npm run verify:phase3 && npm run verify:phase4 && node scripts/verify-phase-5.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",

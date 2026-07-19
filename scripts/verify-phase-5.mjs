@@ -239,32 +239,37 @@ function loadGitTextBlobs() {
   }
   if (objects.length === 0) return [];
 
-  try {
-    const output = execFileSync("git", ["cat-file", "--batch"], {
-      cwd: root,
-      input: `${objects.map((object) => object.oid).join("\n")}\n`
-    });
-    const blobs = [];
-    let offset = 0;
-    for (const object of objects) {
-      const headerEnd = output.indexOf(10, offset);
-      if (headerEnd < 0) break;
-      const header = output.subarray(offset, headerEnd).toString("utf8").split(" ");
-      offset = headerEnd + 1;
-      if (header[1] !== "blob") continue;
-      const size = Number(header[2]);
-      if (!Number.isFinite(size) || size > 8 * 1024 * 1024) {
-        offset += Math.max(size, 0) + 1;
-        continue;
+  const blobs = [];
+  const batchSize = 128;
+  for (let start = 0; start < objects.length; start += batchSize) {
+    const batch = objects.slice(start, start + batchSize);
+    try {
+      const output = execFileSync("git", ["cat-file", "--batch"], {
+        cwd: root,
+        input: `${batch.map((object) => object.oid).join("\n")}\n`,
+        maxBuffer: 64 * 1024 * 1024
+      });
+      let offset = 0;
+      for (const object of batch) {
+        const headerEnd = output.indexOf(10, offset);
+        if (headerEnd < 0) break;
+        const header = output.subarray(offset, headerEnd).toString("utf8").split(" ");
+        offset = headerEnd + 1;
+        if (header[1] !== "blob") continue;
+        const size = Number(header[2]);
+        if (!Number.isFinite(size) || size > 8 * 1024 * 1024) {
+          offset += Math.max(size, 0) + 1;
+          continue;
+        }
+        const content = output.subarray(offset, offset + size).toString("utf8");
+        offset += size + 1;
+        blobs.push({ path: object.path, content });
       }
-      const content = output.subarray(offset, offset + size).toString("utf8");
-      offset += size + 1;
-      blobs.push({ path: object.path, content });
+    } catch {
+      return [];
     }
-    return blobs;
-  } catch {
-    return [];
   }
+  return blobs;
 }
 
 function deduplicateMarkers(markers) {

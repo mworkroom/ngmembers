@@ -7,15 +7,16 @@ import { MemberCard } from "./components/MemberCard";
 import { MemberEditor } from "./components/MemberEditor";
 import { SearchBar } from "./components/SearchBar";
 import { Toast } from "./components/Toast";
+import { labels } from "./content/labels";
 import { useMembers } from "./hooks/useMembers";
 import { clearLegacyMemberStorage } from "./lib/legacyStorageCleanup";
 import type { MainFilter, MemberFormState, MemberRecord } from "./types";
 import {
   compareMemberNumbers,
   displayName,
-  normalizeLooseText,
   normalizeSearch
 } from "./utils/formatters";
+import { getSearchRank, isExactMemberNumberMatch } from "./utils/memberSearch";
 import {
   buildRelationIndex,
   collectMemberIssues,
@@ -104,7 +105,7 @@ export default function App({ role, onSignOut }: AppProps) {
 
   useEffect(() => {
     document.documentElement.lang = "ko";
-    document.title = "회원 계보 찾기";
+    document.title = labels.app.title;
     clearLegacyMemberStorage();
   }, []);
 
@@ -118,9 +119,7 @@ export default function App({ role, onSignOut }: AppProps) {
     const normalized = normalizeSearch(query);
     if (normalized) {
       const exact = filteredMembers.filter((member) =>
-        [member.memberNumber, member.name, member.nickname, member.phone]
-          .map(normalizeSearch)
-          .includes(normalized)
+        isExactMemberNumberMatch(member, normalized)
       );
       if (exact.length === 1) {
         setExpandedId(exact[0].id);
@@ -216,8 +215,8 @@ export default function App({ role, onSignOut }: AppProps) {
               ))
             ) : (
               <div className="empty-state">
-                <strong>검색 결과가 없습니다.</strong>
-                <span>회원번호나 닉네임을 다시 확인해주세요.</span>
+                <strong>{labels.search.emptyTitle}</strong>
+                <span>{labels.search.emptyDescription}</span>
               </div>
             )}
           </section>
@@ -376,42 +375,4 @@ function MemberDataState({
       ) : null}
     </section>
   );
-}
-
-function getSearchRank(
-  member: MemberRecord,
-  rawQuery: string,
-  normalizedQuery: string
-): number {
-  const number = normalizeSearch(member.memberNumber);
-  const nickname = normalizeSearch(member.nickname);
-  const name = normalizeSearch(member.name);
-  const phone = normalizeSearch(member.phone);
-
-  if (number === normalizedQuery) return 0;
-  if (nickname === normalizedQuery) return 1;
-  if (name === normalizedQuery) return 2;
-  if (phone === normalizedQuery) return 3;
-  if (number.startsWith(normalizedQuery)) return 4;
-  if (nickname.startsWith(normalizedQuery)) return 5;
-  if (name.startsWith(normalizedQuery)) return 6;
-  if (phone.includes(normalizedQuery)) return 7;
-
-  const tokens = normalizeLooseText(rawQuery)
-    .split(/\s+/)
-    .map(normalizeSearch)
-    .filter(Boolean);
-  const haystack = normalizeSearch(
-    [
-      member.memberNumber,
-      member.name,
-      member.nickname,
-      member.phone
-    ].join(" ")
-  );
-  if (tokens.length > 0 && tokens.every((token) => haystack.includes(token))) return 8;
-  if (nickname.includes(normalizedQuery)) return 9;
-  if (name.includes(normalizedQuery)) return 10;
-  if (number.includes(normalizedQuery)) return 11;
-  return 99;
 }

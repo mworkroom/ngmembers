@@ -5,12 +5,14 @@ import type {
   MemberSide,
   RelationIndex
 } from "../types";
+import { labels } from "../content/labels";
 import {
   countryLabel,
   displayName,
   formatBirthDate,
   formatCpf,
   formatMemberSubline,
+  formatNotesPreview,
   formatPhone,
   sideLabel
 } from "../utils/formatters";
@@ -83,6 +85,11 @@ export function MemberCard({
             {formatMemberSubline(member).map((part, index) => (
               <span key={`${part}-${index}`}>{part}</span>
             ))}
+            {member.notes ? (
+              <span className="member-summary-notes" title={member.notes}>
+                {formatNotesPreview(member.notes)}
+              </span>
+            ) : null}
           </span>
         </span>
         <ChevronIcon className="member-chevron" />
@@ -90,18 +97,18 @@ export function MemberCard({
 
       {expanded ? (
         <div className="member-details">
-          <div className="member-badges" aria-label="회원 표시">
+          <div className="member-badges" aria-label={labels.member.badgesAriaLabel}>
             {member.isAnchorMember ? (
-              <span className="badge badge-anchor">주요 사업자</span>
+              <span className="badge badge-anchor">{labels.member.anchor}</span>
             ) : null}
             {member.isFavorite ? (
-              <span className="badge badge-favorite">관심 회원</span>
+              <span className="badge badge-favorite">{labels.member.favorite}</span>
             ) : null}
             {member.status === "withdrawn" ? (
-              <span className="badge badge-withdrawn">탈퇴</span>
+              <span className="badge badge-withdrawn">{labels.member.withdrawn}</span>
             ) : null}
             {hasReview ? (
-              <span className="badge badge-review">확인 필요</span>
+              <span className="badge badge-review">{labels.member.review}</span>
             ) : null}
           </div>
 
@@ -330,13 +337,11 @@ function buildInfoRows(member: MemberRecord): Array<{
   const phone = formatPhone(member.phone, member.countryCode);
   const cpf = formatCpf(member.cpf);
 
-  if (birthDate) rows.push({ label: "생년월일", value: birthDate });
-  if (phone) rows.push({ label: "전화번호", value: phone, href: `tel:${member.phone}` });
-  if (cpf) rows.push({ label: "CPF", value: cpf });
-  if (member.notes) rows.push({ label: "메모", value: member.notes });
-  if (!member.countryCode) {
-    rows.push({ label: "국가", value: countryLabel(member.countryCode) });
-  }
+  if (birthDate) rows.push({ label: labels.member.birthDate, value: birthDate });
+  if (phone) rows.push({ label: labels.member.phone, value: phone, href: `tel:${member.phone}` });
+  if (cpf) rows.push({ label: labels.member.cpf, value: cpf });
+  rows.push({ label: labels.member.country, value: countryLabel(member.countryCode) });
+  if (member.notes) rows.push({ label: labels.member.notes, value: member.notes });
 
   return rows;
 }

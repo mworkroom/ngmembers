@@ -1,4 +1,5 @@
 import type { MainFilter } from "../types";
+import { labels } from "../content/labels";
 
 interface FilterTabsProps {
   value: MainFilter;
@@ -7,14 +8,14 @@ interface FilterTabsProps {
 }
 
 const tabs: Array<{ value: MainFilter; label: string }> = [
-  { value: "all", label: "전체" },
-  { value: "anchor", label: "주요 사업자" },
-  { value: "favorite", label: "관심 회원" }
+  { value: "all", label: labels.filters.all },
+  { value: "anchor", label: labels.filters.anchor },
+  { value: "favorite", label: labels.filters.favorite }
 ];
 
 export function FilterTabs({ value, counts, onChange }: FilterTabsProps) {
   return (
-    <div className="filter-tabs" role="tablist" aria-label="회원 목록 필터">
+    <div className="filter-tabs" role="tablist" aria-label={labels.filters.ariaLabel}>
       {tabs.map((tab) => (
         <button
           key={tab.value}

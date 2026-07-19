@@ -101,7 +101,7 @@ button {
   min-height: 42px;
   padding: 0 12px;
   border: 1px solid rgba(255, 255, 255, 0.42);
-  border-radius: 999px;
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.17);
   color: white;
   cursor: pointer;
@@ -368,6 +368,14 @@ button {
   margin-right: 7px;
   color: #b0b6bf;
   content: "·";
+}
+
+.member-summary-notes {
+  max-width: 12ch;
+  overflow: hidden;
+  color: #59616c; 
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .member-chevron {

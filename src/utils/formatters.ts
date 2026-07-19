@@ -1,4 +1,5 @@
 import type { MemberRecord, MemberSide, MemberStatus } from "../types";
+import { labels } from "../content/labels";
 
 export function onlyDigits(value: string): string {
   return value.replace(/\D/g, "");
@@ -32,8 +33,7 @@ export function displayName(member: MemberRecord): string {
 
 export function countryLabel(code: string, compact = false): string {
   const normalized = code.trim().toUpperCase();
-  if (!normalized) return compact ? "" : "국가 미확인";
-  if (normalized === "XX") return "글로벌";
+  if (!normalized) return compact ? "" : labels.member.countryUnknown;
   return normalized;
 }
 
@@ -73,7 +73,7 @@ export function formatBirthDate(value: string): string {
     (today.getMonth() + 1 === month && today.getDate() >= day);
   if (!birthdayPassed) age -= 1;
 
-  return `${digits.slice(0, 4)}.${digits.slice(4, 6)}.${digits.slice(6, 8)} · 만 ${age}세`;
+  return `${digits.slice(0, 4)}.${digits.slice(4, 6)}.${digits.slice(6, 8)} · ${age}세`;
 }
 
 export function formatPhone(value: string, countryCode: string): string {
@@ -123,7 +123,8 @@ export function isValidNickname(value: string): boolean {
   const trimmed = value.trim();
   if (!trimmed) return true;
   const hangulCount = (trimmed.match(/[가-힣]/g) ?? []).length;
-  return hangulCount >= 2 && /^[가-힣\s]+$/.test(trimmed);
+  const hasControlCharacter = /[\u0000-\u001F\u007F]/.test(trimmed);
+  return hangulCount >= 2 && !hasControlCharacter;
 }
 
 export function formatMemberSubline(member: MemberRecord): string[] {
@@ -133,6 +134,12 @@ export function formatMemberSubline(member: MemberRecord): string[] {
   const country = countryLabel(member.countryCode, true);
   if (country) parts.push(`(${country})`);
   return parts;
+}
+
+export function formatNotesPreview(value: string, maxLength = 10): string {
+  const normalized = value.trim().replace(/\s+/g, " ");
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength)}…`;
 }
 
 export function toMemberStatus(value: string): {

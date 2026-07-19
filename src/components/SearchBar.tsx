@@ -1,4 +1,5 @@
 import { SearchIcon } from "./Icons";
+import { labels } from "../content/labels";
 
 interface SearchBarProps {
   value: string;
@@ -15,15 +16,15 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
           type="search"
           inputMode="search"
           autoComplete="off"
-          placeholder="이름·닉네임·회원번호·전화번호"
-          aria-label="회원 검색"
+          placeholder={labels.search.placeholder}
+          aria-label={labels.search.ariaLabel}
           onChange={(event) => onChange(event.target.value)}
         />
         {value ? (
           <button
             type="button"
             className="search-clear-button"
-            aria-label="검색어 지우기"
+            aria-label={labels.search.clearAriaLabel}
             onClick={() => onChange("")}
           >
             ×

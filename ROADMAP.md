@@ -25,7 +25,7 @@
 - sponsor 관계 연결 결과 확인
 - J님 승인 후 production import
 
-## Phase 3 — 앱을 실제 DB에 연결 🚧
+## Phase 3 — 앱을 실제 DB에 연결 ✅
 
 - localStorage와 seed 제거
 - 회원 조회·추가·수정·숨김 연결
@@ -49,5 +49,5 @@
 - PC·iPhone·iPad 실사용 확인
 
 ```text
-현재 위치: Phase 3 로컬 구현·자동 검사 완료 → production migration·두 Admin 실사용 검증 대기
+현재 위치: Phase 3 production 적용·실사용 검증 완료 → Phase 4 계획 완료·문구 승인 대기
 ```

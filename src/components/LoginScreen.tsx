@@ -77,12 +77,12 @@ function getContent(status: AuthStatus) {
     case "authorized":
       return {
         title: "사용 권한을 확인하고 있습니다",
-        description: "ngmembers 워크스페이스 멤버십을 확인하는 중입니다."
+        description: "잠시만 기다려주세요."
       };
     case "unauthorized":
       return {
         title: "사용 권한이 없는 계정입니다",
-        description: "허용된 Admin 계정으로 다시 로그인해주세요."
+        description: "허용된 계정으로 다시 로그인해주세요."
       };
     case "error":
       return {
@@ -93,7 +93,7 @@ function getContent(status: AuthStatus) {
     default:
       return {
         title: "회원 계보 찾기",
-        description: "허용된 Google Admin 계정으로 로그인해주세요."
+        description: "Google Admin 계정으로 로그인해주세요."
       };
   }
 }

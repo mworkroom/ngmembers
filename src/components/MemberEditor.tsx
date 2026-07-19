@@ -4,6 +4,7 @@ import type {
   MemberRecord,
   RelationIndex
 } from "../types";
+import { labels } from "../content/labels";
 import {
   isValidNickname,
   onlyDigits,
@@ -123,27 +124,20 @@ export function MemberEditor({
                 />
               </label>
               <label>
-                <span className="field-label">국가</span>
-                <input
+                <span className="field-label">{labels.editor.country}</span>
+                <select
                   value={state.countryCode}
-                  type="text"
-                  list="country-code-options"
-                  autoComplete="off"
-                  maxLength={2}
-                  placeholder="KR / BR / XX"
                   onChange={(event) =>
-                    patch({ countryCode: event.target.value.toUpperCase() })
+                    patch({ countryCode: event.target.value })
                   }
-                />
-                <datalist id="country-code-options">
-                  <option value="KR">한국</option>
-                  <option value="BR">브라질</option>
-                  <option value="US">미국</option>
-                  <option value="MX">멕시코</option>
-                  <option value="CO">콜롬비아</option>
-                  <option value="XX">글로벌 회원</option>
-                </datalist>
-                <small className="field-hint">XX는 글로벌, 빈칸은 국가 미확인</small>
+                >
+                  {labels.editor.countryOptions.map((option) => (
+                    <option key={option.value || "empty"} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <small className="field-hint">{labels.editor.countryHint}</small>
               </label>
             </div>
 
@@ -163,10 +157,10 @@ export function MemberEditor({
                 value={state.nickname}
                 type="text"
                 autoComplete="off"
-                placeholder="한글 두 글자 이상"
+                placeholder={labels.editor.nicknamePlaceholder}
                 onChange={(event) => patch({ nickname: event.target.value })}
               />
-              <small className="field-hint">닉네임은 한글로만 입력합니다.</small>
+              <small className="field-hint">{labels.editor.nicknameHint}</small>
             </label>
 
             <div className="form-grid two-columns">
@@ -194,7 +188,7 @@ export function MemberEditor({
                       patch({ isAnchorMember: event.target.checked })
                     }
                   />
-                  <span>주요 사업자</span>
+                  <span>{labels.member.anchor}</span>
                 </label>
                 <label className="checkbox-card">
                   <input
@@ -417,13 +411,10 @@ function validateForm(
     return "회원번호는 숫자만 입력해주세요.";
   }
   if (state.nickname !== (member?.nickname ?? "") && !isValidNickname(state.nickname)) {
-    return "닉네임은 한글 두 글자 이상으로 입력해주세요.";
+    return labels.validation.nickname;
   }
   if (state.birthDate && state.birthDate.length !== 8) {
     return "생년월일은 8자리 숫자로 입력해주세요.";
-  }
-  if (state.countryCode && !/^[A-Z]{2}$/.test(state.countryCode)) {
-    return "국가 코드는 영문 두 글자로 입력해주세요.";
   }
   const duplicate = state.memberNumber
     ? members.find(

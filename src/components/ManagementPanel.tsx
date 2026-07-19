@@ -140,7 +140,8 @@ export function ManagementPanel({
                 onClick={() => setView("hidden")}
               />
               <ManagementMenuButton
-                label="스폰서 정리 미완료"
+                label="스폰서 연결 미완료"
+                description="스폰서 정보가 없는 회원"
                 count={unresolvedMembers.length}
                 tone="muted"
                 onClick={() => setView("unresolved")}

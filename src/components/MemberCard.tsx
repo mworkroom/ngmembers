@@ -73,11 +73,17 @@ export function MemberCard({
       id={`member-${member.id}`}
       className={`member-card ${expanded ? "expanded" : ""}`}
     >
-      <button
-        type="button"
+      <div
         className="member-summary"
+        role="button"
+        tabIndex={0}
         aria-expanded={expanded}
         onClick={() => onToggle(member.id)}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          onToggle(member.id);
+        }}
       >
         <span className="member-summary-copy">
           <strong className="member-summary-name" title={displayName(member)}>
@@ -90,6 +96,13 @@ export function MemberCard({
                 className={
                   member.countryCode && index === summaryParts.length - 1
                     ? `member-summary-country country-${countryBadgeTone(member.countryCode)}`
+                    : part === member.memberNumber
+                      ? "member-summary-number"
+                    : undefined
+                }
+                onClick={
+                  part === member.memberNumber
+                    ? (event) => event.stopPropagation()
                     : undefined
                 }
               >
@@ -104,7 +117,7 @@ export function MemberCard({
           </span>
         </span>
         <ChevronIcon className="member-chevron" />
-      </button>
+      </div>
 
       {expanded ? (
         <div className="member-details">

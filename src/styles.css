@@ -397,6 +397,7 @@ button {
   background: transparent;
   cursor: pointer;
   text-align: left;
+  user-select: none;
 }
 
 .member-summary:hover {
@@ -440,6 +441,11 @@ button {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.35;
+}
+
+.member-summary-number {
+  cursor: text;
+  user-select: text;
 }
 
 .member-summary-meta span + span::before {

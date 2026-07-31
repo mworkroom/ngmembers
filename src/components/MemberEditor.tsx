@@ -8,7 +8,8 @@ import { labels } from "../content/labels";
 import {
   isValidNickname,
   onlyDigits,
-  sideLabel
+  sideLabel,
+  toPersonNameTitleCase
 } from "../utils/formatters";
 import { CloseIcon } from "./Icons";
 import { MemberPicker } from "./MemberPicker";
@@ -96,13 +97,18 @@ export function MemberEditor({
           className="member-form"
           onSubmit={(event) => {
             event.preventDefault();
-            const validation = validateForm(state, member, members);
+            const submittedState = isEditing
+              ? state
+              : { ...state, name: toPersonNameTitleCase(state.name) };
+            if (!isEditing) setState(submittedState);
+
+            const validation = validateForm(submittedState, member, members);
             if (validation) {
               setError(validation);
               return;
             }
             setError("");
-            void onSave(state);
+            void onSave(submittedState);
           }}
         >
           <section className="form-section">
@@ -146,6 +152,11 @@ export function MemberEditor({
                 type="text"
                 autoComplete="off"
                 onChange={(event) => patch({ name: event.target.value })}
+                onBlur={() => {
+                  if (!isEditing) {
+                    patch({ name: toPersonNameTitleCase(state.name) });
+                  }
+                }}
               />
             </label>
 

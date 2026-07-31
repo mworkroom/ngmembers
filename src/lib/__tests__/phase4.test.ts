@@ -8,7 +8,8 @@ import {
   formatMemberSubline,
   formatNotesPreview,
   isValidNickname,
-  normalizeSearch
+  normalizeSearch,
+  toPersonNameTitleCase
 } from "../../utils/formatters";
 import {
   getSearchRank,
@@ -62,6 +63,17 @@ test("닉네임은 한국어 두 글자를 포함하면 다른 문자도 허용�
   assert.equal(isValidNickname("ab가나"), true);
   assert.equal(isValidNickname("hercilla"), false);
   assert.equal(isValidNickname("가"), false);
+});
+
+test("새 회원 이름 입력을 공백과 대소문자에 관계없이 Title Case로 정리한다", () => {
+  assert.equal(toPersonNameTitleCase("  MARIA   DA SILVA "), "Maria Da Silva");
+  assert.equal(toPersonNameTitleCase("mArIA dA siLVA"), "Maria Da Silva");
+  assert.equal(
+    toPersonNameTitleCase("ANA-MARIA D'ÁVILA O’CONNOR"),
+    "Ana-Maria D'Ávila O’Connor"
+  );
+  assert.equal(toPersonNameTitleCase("JOÃO DA SILVA"), "João Da Silva");
+  assert.equal(toPersonNameTitleCase("홍길동"), "홍길동");
 });
 
 test("접힌 카드 요약은 코드, 펼친 카드 본문은 국가명으로 표시한다", () => {

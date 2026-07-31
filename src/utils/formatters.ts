@@ -5,6 +5,15 @@ export function onlyDigits(value: string): string {
   return value.replace(/\D/g, "");
 }
 
+export function toPersonNameTitleCase(value: string): string {
+  const normalized = value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+  return normalized.replace(
+    /(^|[\s'’\-])(\p{L})/gu,
+    (_match, boundary: string, letter: string) =>
+      boundary + letter.toLocaleUpperCase()
+  );
+}
+
 export function normalizeSearch(value: string): string {
   return value
     .normalize("NFD")

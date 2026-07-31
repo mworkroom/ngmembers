@@ -16,6 +16,10 @@ import {
   isExactMemberNumberMatch
 } from "../../utils/memberSearch";
 import {
+  NEW_MEMBER_DRAFT_TTL_MS,
+  parseNewMemberDraft
+} from "../newMemberDraft";
+import {
   parseMemberWorkContext,
   WORK_CONTEXT_TTL_MS
 } from "../workContext";
@@ -105,6 +109,7 @@ test("작업 컨텍스트는 30분 동안 최소 화면 상태만 복원한다",
     filter: "favorite",
     activeMemberId: "40000000-0000-5000-8000-000000000001",
     editorMemberId: "40000000-0000-5000-8000-000000000001",
+    newMemberEditorOpen: false,
     scrollY: 320,
     notes: "복원하면 안 되는 값"
   };
@@ -115,6 +120,7 @@ test("작업 컨텍스트는 30분 동안 최소 화면 상태만 복원한다",
     filter: "favorite",
     activeMemberId: "40000000-0000-5000-8000-000000000001",
     editorMemberId: "40000000-0000-5000-8000-000000000001",
+    newMemberEditorOpen: false,
     scrollY: 320
   });
   assert.equal(
@@ -137,10 +143,34 @@ test("작업 컨텍스트는 손상되거나 허용되지 않은 값을 복원�
         filter: "unknown",
         activeMemberId: null,
         editorMemberId: null,
+        newMemberEditorOpen: false,
         scrollY: 0
       }),
       now
     ),
+    null
+  );
+});
+
+test("새 회원 추가창과 이름·회원번호 초안은 30분 동안 복원한다", () => {
+  const now = Date.UTC(2026, 7, 1, 3, 0, 0);
+  const draft = {
+    version: 1,
+    savedAt: now - NEW_MEMBER_DRAFT_TTL_MS,
+    memberNumber: "12345678",
+    name: "Hong Gil Dong"
+  };
+
+  assert.deepEqual(parseNewMemberDraft(JSON.stringify(draft), now), draft);
+  assert.equal(
+    parseNewMemberDraft(
+      JSON.stringify({ ...draft, savedAt: now - NEW_MEMBER_DRAFT_TTL_MS - 1 }),
+      now
+    ),
+    null
+  );
+  assert.equal(
+    parseNewMemberDraft(JSON.stringify({ ...draft, memberNumber: "12A" }), now),
     null
   );
 });

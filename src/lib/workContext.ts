@@ -9,6 +9,7 @@ export interface MemberWorkContext {
   filter: MainFilter;
   activeMemberId: string | null;
   editorMemberId: string | null;
+  newMemberEditorOpen: boolean;
   scrollY: number;
 }
 
@@ -64,6 +65,8 @@ export function parseMemberWorkContext(
       !isMainFilter(value.filter) ||
       !isNullableId(value.activeMemberId) ||
       !isNullableId(value.editorMemberId) ||
+      (value.newMemberEditorOpen !== undefined &&
+        typeof value.newMemberEditorOpen !== "boolean") ||
       typeof value.scrollY !== "number" ||
       !Number.isFinite(value.scrollY) ||
       value.scrollY < 0
@@ -77,6 +80,7 @@ export function parseMemberWorkContext(
       filter: value.filter,
       activeMemberId: value.activeMemberId,
       editorMemberId: value.editorMemberId,
+      newMemberEditorOpen: value.newMemberEditorOpen ?? false,
       scrollY: value.scrollY
     };
   } catch {

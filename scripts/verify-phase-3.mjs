@@ -95,6 +95,7 @@ if (
   !workContext.includes("WORK_CONTEXT_TTL_MS = 30 * 60 * 1000") ||
   !workContext.includes("activeMemberId: string | null") ||
   !workContext.includes("editorMemberId: string | null") ||
+  !workContext.includes("newMemberEditorOpen: boolean") ||
   !workContext.includes("scrollY: number")
 ) {
   failures.push("30분 최소 UI 작업 컨텍스트 계약이 확인되지 않음");

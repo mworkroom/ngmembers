@@ -6,6 +6,11 @@ import type {
 } from "../types";
 import { labels } from "../content/labels";
 import {
+  clearNewMemberDraft,
+  readNewMemberDraft,
+  writeNewMemberDraft
+} from "../lib/newMemberDraft";
+import {
   isValidNickname,
   onlyDigits,
   sideLabel,
@@ -38,23 +43,25 @@ export function MemberEditor({
   onSave
 }: MemberEditorProps) {
   const [state, setState] = useState<MemberFormState>(() =>
-    initialState(member, relations)
+    initialState(member, relations, member ? null : readNewMemberDraft())
   );
   const [error, setError] = useState("");
   const isEditing = Boolean(member);
 
   useEffect(() => {
-    setState(initialState(member, relations));
+    setState(
+      initialState(member, relations, member ? null : readNewMemberDraft())
+    );
     setError("");
   }, [member?.id]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !pending) onClose();
+      if (event.key === "Escape" && !pending) closeEditor();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, pending]);
+  }, [onClose, pending, isEditing]);
 
   const unresolvedHint = useMemo(() => {
     if (state.affiliationId || !state.sponsorNameRaw) return "";
@@ -66,7 +73,7 @@ export function MemberEditor({
       className="editor-backdrop"
       role="presentation"
       onMouseDown={(event) => {
-        if (event.currentTarget === event.target && !pending) onClose();
+        if (event.currentTarget === event.target && !pending) closeEditor();
       }}
     >
       <section
@@ -87,7 +94,7 @@ export function MemberEditor({
             className="icon-button"
             aria-label="닫기"
             disabled={pending}
-            onClick={onClose}
+            onClick={closeEditor}
           >
             <CloseIcon />
           </button>
@@ -347,7 +354,7 @@ export function MemberEditor({
               type="button"
               className="secondary-button"
               disabled={pending}
-              onClick={onClose}
+              onClick={closeEditor}
             >
               취소
             </button>
@@ -358,18 +365,33 @@ export function MemberEditor({
   );
 
   function patch(next: Partial<MemberFormState>) {
-    setState((current) => ({ ...current, ...next }));
+    setState((current) => {
+      const updated = { ...current, ...next };
+      if (!isEditing) {
+        writeNewMemberDraft({
+          memberNumber: updated.memberNumber,
+          name: updated.name
+        });
+      }
+      return updated;
+    });
+  }
+
+  function closeEditor() {
+    if (!isEditing) clearNewMemberDraft();
+    onClose();
   }
 }
 
 function initialState(
   member: MemberRecord | null,
-  relations: RelationIndex
+  relations: RelationIndex,
+  draft: { memberNumber: string; name: string } | null = null
 ): MemberFormState {
   if (!member) {
     return {
-      memberNumber: "",
-      name: "",
+      memberNumber: draft?.memberNumber ?? "",
+      name: draft?.name ?? "",
       nickname: "",
       isAnchorMember: false,
       isFavorite: false,

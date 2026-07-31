@@ -10,6 +10,7 @@ import { Toast } from "./components/Toast";
 import { labels } from "./content/labels";
 import { useMembers } from "./hooks/useMembers";
 import { clearLegacyMemberStorage } from "./lib/legacyStorageCleanup";
+import { clearNewMemberDraft } from "./lib/newMemberDraft";
 import {
   clearMemberWorkContext,
   readMemberWorkContext,
@@ -140,7 +141,9 @@ export default function App({ email, onSignOut }: AppProps) {
       setFilter(initialWorkContext.filter);
     }
 
-    if (editorMember && !editorMember.isHidden) {
+    if (initialWorkContext?.newMemberEditorOpen) {
+      setEditorMode("new");
+    } else if (editorMember && !editorMember.isHidden) {
       setEditorMode(editorMember.id);
     }
 
@@ -171,6 +174,7 @@ export default function App({ email, onSignOut }: AppProps) {
         activeMemberId: expandedId,
         editorMemberId:
           editorMode && editorMode !== "new" ? editorMode : null,
+        newMemberEditorOpen: editorMode === "new",
         scrollY: Math.max(0, window.scrollY)
       });
     };
@@ -195,6 +199,7 @@ export default function App({ email, onSignOut }: AppProps) {
       setFilter("all");
       setExpandedId(null);
       setEditorMode(null);
+      clearNewMemberDraft();
       setManagementOpen(false);
       setConfirmState(null);
       window.scrollTo({ top: 0 });
@@ -419,6 +424,7 @@ export default function App({ email, onSignOut }: AppProps) {
     }
 
     setEditorMode(null);
+    clearNewMemberDraft();
     setToast("새 회원을 추가했습니다.");
     window.setTimeout(() => focusMember(result.member), 20);
   }
@@ -456,6 +462,7 @@ export default function App({ email, onSignOut }: AppProps) {
 
   async function handleSignOut() {
     clearMemberWorkContext();
+    clearNewMemberDraft();
     await onSignOut();
   }
 }

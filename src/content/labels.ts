@@ -15,6 +15,13 @@ export const labels = {
     anchor: "주요 사업자",
     favorite: "관심 회원"
   },
+  sort: {
+    label: "정렬",
+    ariaLabel: "회원 목록 정렬",
+    memberNumber: "회원번호순",
+    recentAdded: "최근 추가순",
+    recentUpdated: "최근 수정순"
+  },
   member: {
     badgesAriaLabel: "회원 표시",
     anchor: "주요 사업자",

@@ -3,6 +3,7 @@ import test from "node:test";
 import { labels } from "../../content/labels";
 import type { MemberRecord } from "../../types";
 import {
+  compareMembersBySort,
   countryLabel,
   countryBadgeTone,
   formatMemberSubline,
@@ -31,6 +32,23 @@ test("주요 사용자 문구와 국가 선택지를 한 모듈에서 제공한�
     labels.editor.countryOptions.map(({ value }) => value),
     ["", "KR", "BR", "MX", "XX"]
   );
+});
+
+test("회원 목록 정렬은 회원번호순을 기본으로 최근 추가·수정순을 지원한다", () => {
+  const older = fakeMember({
+    memberNumber: "12",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-03T00:00:00.000Z"
+  });
+  const newer = fakeMember({
+    memberNumber: "3",
+    createdAt: "2026-07-02T00:00:00.000Z",
+    updatedAt: "2026-07-04T00:00:00.000Z"
+  });
+
+  assert.ok(compareMembersBySort(older, newer, "memberNumber") > 0);
+  assert.ok(compareMembersBySort(older, newer, "recentAdded") > 0);
+  assert.ok(compareMembersBySort(older, newer, "recentUpdated") > 0);
 });
 
 test("메모를 기존 검색 필드보다 낮은 우선순위로 검색한다", () => {

@@ -1,4 +1,4 @@
-import type { MemberRecord, MemberSide, MemberStatus } from "../types";
+import type { MemberRecord, MemberSide, MemberSort, MemberStatus } from "../types";
 import { labels } from "../content/labels";
 
 export function onlyDigits(value: string): string {
@@ -34,6 +34,32 @@ export function normalizeLooseText(value: string): string {
 
 export function compareMemberNumbers(a: string, b: string): number {
   return a.localeCompare(b, "ko", { numeric: true, sensitivity: "base" });
+}
+
+export function compareMembersBySort(
+  a: MemberRecord,
+  b: MemberRecord,
+  sort: MemberSort
+): number {
+  if (sort === "recentAdded") {
+    return compareTimestampsDescending(a.createdAt, b.createdAt) ||
+      compareMemberNumbers(a.memberNumber, b.memberNumber);
+  }
+
+  if (sort === "recentUpdated") {
+    return compareTimestampsDescending(a.updatedAt, b.updatedAt) ||
+      compareMemberNumbers(a.memberNumber, b.memberNumber);
+  }
+
+  return compareMemberNumbers(a.memberNumber, b.memberNumber);
+}
+
+function compareTimestampsDescending(a: string, b: string): number {
+  const aTime = Date.parse(a);
+  const bTime = Date.parse(b);
+  const safeATime = Number.isFinite(aTime) ? aTime : 0;
+  const safeBTime = Number.isFinite(bTime) ? bTime : 0;
+  return safeBTime - safeATime;
 }
 
 export function displayName(member: MemberRecord): string {

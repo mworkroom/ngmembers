@@ -17,9 +17,14 @@ import {
   WORK_CONTEXT_TTL_MS,
   writeMemberWorkContext
 } from "./lib/workContext";
-import type { MainFilter, MemberFormState, MemberRecord } from "./types";
+import type {
+  MainFilter,
+  MemberFormState,
+  MemberRecord,
+  MemberSort
+} from "./types";
 import {
-  compareMemberNumbers,
+  compareMembersBySort,
   displayName,
   normalizeSearch
 } from "./utils/formatters";
@@ -46,6 +51,7 @@ export default function App({ email, onSignOut }: AppProps) {
   );
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<MainFilter>("all");
+  const [sort, setSort] = useState<MemberSort>("memberNumber");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>(null);
   const [managementOpen, setManagementOpen] = useState(false);
@@ -90,9 +96,7 @@ export default function App({ email, onSignOut }: AppProps) {
 
     const normalizedQuery = normalizeSearch(query);
     if (!normalizedQuery) {
-      return [...byFilter].sort((a, b) =>
-        compareMemberNumbers(a.memberNumber, b.memberNumber)
-      );
+      return [...byFilter].sort((a, b) => compareMembersBySort(a, b, sort));
     }
 
     return byFilter
@@ -104,10 +108,10 @@ export default function App({ email, onSignOut }: AppProps) {
       .sort(
         (a, b) =>
           a.rank - b.rank ||
-          compareMemberNumbers(a.member.memberNumber, b.member.memberNumber)
+          compareMembersBySort(a.member, b.member, sort)
       )
       .map((item) => item.member);
-  }, [filter, query, visibleMembers]);
+  }, [filter, query, sort, visibleMembers]);
 
   const editingMember =
     editorMode && editorMode !== "new"
@@ -286,13 +290,18 @@ export default function App({ email, onSignOut }: AppProps) {
                   검색 해제
                 </button>
               ) : null}
-              <button
-                type="button"
-                disabled={memberState.isRefreshing || writePending}
-                onClick={() => void memberState.refresh()}
-              >
-                {memberState.isRefreshing ? "새로고침 중" : "새로고침"}
-              </button>
+              <label className="sort-control">
+                <span>{labels.sort.label}</span>
+                <select
+                  aria-label={labels.sort.ariaLabel}
+                  value={sort}
+                  onChange={(event) => setSort(event.target.value as MemberSort)}
+                >
+                  <option value="memberNumber">{labels.sort.memberNumber}</option>
+                  <option value="recentAdded">{labels.sort.recentAdded}</option>
+                  <option value="recentUpdated">{labels.sort.recentUpdated}</option>
+                </select>
+              </label>
             </div>
           </div>
 

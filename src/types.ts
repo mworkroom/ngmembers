@@ -1,6 +1,7 @@
 export type MemberStatus = "active" | "withdrawn" | "review";
 export type MemberSide = "left" | "right" | null;
 export type MainFilter = "all" | "anchor" | "favorite";
+export type MemberSort = "memberNumber" | "recentAdded" | "recentUpdated";
 
 export interface MemberRecord {
   id: string;

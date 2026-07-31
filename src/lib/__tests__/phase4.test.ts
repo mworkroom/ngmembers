@@ -14,10 +14,14 @@ import {
   getSearchRank,
   isExactMemberNumberMatch
 } from "../../utils/memberSearch";
+import {
+  parseMemberWorkContext,
+  WORK_CONTEXT_TTL_MS
+} from "../workContext";
 
 test("주요 사용자 문구와 국가 선택지를 한 모듈에서 제공한다", () => {
   assert.equal(labels.filters.anchor, "주요 사업자");
-  assert.equal(labels.search.placeholder, "이름·닉네임·회원번호·전화번호·메모");
+  assert.equal(labels.search.placeholder, "이름·닉네임·회원번호·메모·전화번호");
   assert.deepEqual(
     labels.editor.countryOptions.map(({ value }) => value),
     ["", "KR", "BR", "MX", "XX"]
@@ -79,6 +83,54 @@ test("국가 코드 badge 색상 그룹을 국가별로 분류한다", () => {
   assert.equal(countryBadgeTone("KR"), "korea");
   assert.equal(countryBadgeTone("MX"), "other");
   assert.equal(countryBadgeTone("XX"), "other");
+});
+
+test("작업 컨텍스트는 30분 동안 최소 화면 상태만 복원한다", () => {
+  const now = Date.UTC(2026, 6, 31, 3, 0, 0);
+  const context = {
+    version: 1,
+    savedAt: now - WORK_CONTEXT_TTL_MS,
+    filter: "favorite",
+    activeMemberId: "40000000-0000-5000-8000-000000000001",
+    editorMemberId: "40000000-0000-5000-8000-000000000001",
+    scrollY: 320,
+    notes: "복원하면 안 되는 값"
+  };
+
+  assert.deepEqual(parseMemberWorkContext(JSON.stringify(context), now), {
+    version: 1,
+    savedAt: now - WORK_CONTEXT_TTL_MS,
+    filter: "favorite",
+    activeMemberId: "40000000-0000-5000-8000-000000000001",
+    editorMemberId: "40000000-0000-5000-8000-000000000001",
+    scrollY: 320
+  });
+  assert.equal(
+    parseMemberWorkContext(
+      JSON.stringify({ ...context, savedAt: now - WORK_CONTEXT_TTL_MS - 1 }),
+      now
+    ),
+    null
+  );
+});
+
+test("작업 컨텍스트는 손상되거나 허용되지 않은 값을 복원하지 않는다", () => {
+  const now = Date.UTC(2026, 6, 31, 3, 0, 0);
+  assert.equal(parseMemberWorkContext("not-json", now), null);
+  assert.equal(
+    parseMemberWorkContext(
+      JSON.stringify({
+        version: 1,
+        savedAt: now,
+        filter: "unknown",
+        activeMemberId: null,
+        editorMemberId: null,
+        scrollY: 0
+      }),
+      now
+    ),
+    null
+  );
 });
 
 function fakeMember(overrides: Partial<MemberRecord> = {}): MemberRecord {

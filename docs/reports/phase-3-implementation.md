@@ -63,7 +63,8 @@ J님이 Docker와 유료 development branch 검증 생략 및 production 적용�
 - `npm run verify:phase3`
   - TypeScript와 Vite production build 91 modules
   - mapper·pagination·conflict 단위 테스트 8개
-  - 27개 src 파일에서 localStorage write, CSV·restore·delete repository 경로 부재 확인
+  - 회원 row의 localStorage write, CSV·restore·delete repository 경로 부재 확인
+  - 후속 UI 복원 기능은 30분 TTL이 있는 별도 버전 키에 필터·회원 ID·편집 회원 ID·스크롤 위치만 허용하며, 회원번호·이름·연락처·메모 등 회원 필드는 Phase 3 검사에서 계속 차단
 - 로컬 브라우저
   - 로그인 전 회원 shell 미노출
   - console warning/error 0건

@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase, supabaseConfigError } from "../lib/supabase";
 
 export type AuthStatus =
@@ -34,6 +34,8 @@ export function useAuth(): AuthState {
   >("idle");
   const [message, setMessage] = useState<string | null>(supabaseConfigError);
   const [retryToken, setRetryToken] = useState(0);
+  const sessionUserIdRef = useRef<string | null>(null);
+  const sessionUserId = session?.user.id ?? null;
 
   useEffect(() => {
     if (!supabase) {
@@ -46,6 +48,7 @@ export function useAuth(): AuthState {
     void supabase.auth.getSession().then(({ data, error }) => {
       if (!active) return;
       if (error) setMessage(error.message);
+      sessionUserIdRef.current = data.session?.user.id ?? null;
       setSession(data.session);
       setSessionReady(true);
     });
@@ -54,7 +57,11 @@ export function useAuth(): AuthState {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!active) return;
-      setAccessStatus(nextSession ? "checking" : "idle");
+      const nextUserId = nextSession?.user.id ?? null;
+      if (sessionUserIdRef.current !== nextUserId) {
+        setAccessStatus(nextSession ? "checking" : "idle");
+      }
+      sessionUserIdRef.current = nextUserId;
       setSession(nextSession);
       setSessionReady(true);
       setMessage(null);
@@ -68,7 +75,7 @@ export function useAuth(): AuthState {
 
   useEffect(() => {
     if (!supabase || !sessionReady) return;
-    if (!session) {
+    if (!sessionUserId) {
       setAccessStatus("idle");
       return;
     }
@@ -100,7 +107,7 @@ export function useAuth(): AuthState {
     return () => {
       active = false;
     };
-  }, [session, sessionReady, retryToken]);
+  }, [retryToken, sessionReady, sessionUserId]);
 
   const signInWithGoogle = useCallback(async () => {
     if (!supabase) return;
@@ -123,6 +130,7 @@ export function useAuth(): AuthState {
       return;
     }
     setSession(null);
+    sessionUserIdRef.current = null;
     setAccessStatus("idle");
   }, []);
 

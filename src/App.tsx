@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { FilterTabs } from "./components/FilterTabs";
 import { Header } from "./components/Header";
@@ -10,6 +10,12 @@ import { Toast } from "./components/Toast";
 import { labels } from "./content/labels";
 import { useMembers } from "./hooks/useMembers";
 import { clearLegacyMemberStorage } from "./lib/legacyStorageCleanup";
+import {
+  clearMemberWorkContext,
+  readMemberWorkContext,
+  WORK_CONTEXT_TTL_MS,
+  writeMemberWorkContext
+} from "./lib/workContext";
 import type { MainFilter, MemberFormState, MemberRecord } from "./types";
 import {
   compareMemberNumbers,
@@ -33,6 +39,10 @@ interface AppProps {
 type ConfirmState = { kind: "hide"; memberId: string } | null;
 
 export default function App({ email, onSignOut }: AppProps) {
+  const [initialWorkContext] = useState(() => readMemberWorkContext());
+  const [workContextReady, setWorkContextReady] = useState(
+    initialWorkContext === null
+  );
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<MainFilter>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -40,6 +50,7 @@ export default function App({ email, onSignOut }: AppProps) {
   const [managementOpen, setManagementOpen] = useState(false);
   const [confirmState, setConfirmState] = useState<ConfirmState>(null);
   const [toast, setToast] = useState("");
+  const hiddenAtRef = useRef<number | null>(null);
   const memberState = useMembers({
     autoRefreshEnabled: editorMode === null && confirmState === null
   });
@@ -110,12 +121,101 @@ export default function App({ email, onSignOut }: AppProps) {
   }, []);
 
   useEffect(() => {
+    if (workContextReady || memberState.status !== "ready") return;
+
+    const activeMember = initialWorkContext?.activeMemberId
+      ? relations.memberById.get(initialWorkContext.activeMemberId) ?? null
+      : null;
+    const editorMember = initialWorkContext?.editorMemberId
+      ? relations.memberById.get(initialWorkContext.editorMemberId) ?? null
+      : null;
+
+    if (activeMember && !activeMember.isHidden) {
+      setFilter("all");
+      setQuery(
+        activeMember.memberNumber || activeMember.name || activeMember.nickname
+      );
+      setExpandedId(activeMember.id);
+    } else if (initialWorkContext) {
+      setFilter(initialWorkContext.filter);
+    }
+
+    if (editorMember && !editorMember.isHidden) {
+      setEditorMode(editorMember.id);
+    }
+
+    setWorkContextReady(true);
+
+    window.setTimeout(() => {
+      if (activeMember) {
+        document
+          .getElementById("member-" + activeMember.id)
+          ?.scrollIntoView({ block: "start" });
+        return;
+      }
+      window.scrollTo({ top: initialWorkContext?.scrollY ?? 0 });
+    }, 80);
+  }, [
+    initialWorkContext,
+    memberState.status,
+    relations.memberById,
+    workContextReady
+  ]);
+
+  useEffect(() => {
+    if (!workContextReady) return;
+
+    const persistCurrentContext = () => {
+      writeMemberWorkContext({
+        filter,
+        activeMemberId: expandedId,
+        editorMemberId:
+          editorMode && editorMode !== "new" ? editorMode : null,
+        scrollY: Math.max(0, window.scrollY)
+      });
+    };
+
+    persistCurrentContext();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        hiddenAtRef.current = Date.now();
+        persistCurrentContext();
+        return;
+      }
+
+      const hiddenAt = hiddenAtRef.current;
+      hiddenAtRef.current = null;
+      if (hiddenAt === null || Date.now() - hiddenAt <= WORK_CONTEXT_TTL_MS) {
+        return;
+      }
+
+      clearMemberWorkContext();
+      setQuery("");
+      setFilter("all");
+      setExpandedId(null);
+      setEditorMode(null);
+      setManagementOpen(false);
+      setConfirmState(null);
+      window.scrollTo({ top: 0 });
+    };
+
+    window.addEventListener("pagehide", persistCurrentContext);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", persistCurrentContext);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [editorMode, expandedId, filter, workContextReady]);
+
+  useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(() => setToast(""), 2600);
     return () => window.clearTimeout(timer);
   }, [toast]);
 
   useEffect(() => {
+    if (memberState.status !== "ready") return;
     const normalized = normalizeSearch(query);
     if (normalized) {
       const exact = filteredMembers.filter((member) =>
@@ -132,14 +232,14 @@ export default function App({ email, onSignOut }: AppProps) {
         ? current
         : null
     );
-  }, [filteredMembers, query]);
+  }, [filteredMembers, memberState.status, query]);
 
   return (
     <main className="app-shell">
       <Header
         onAdd={() => setEditorMode("new")}
         onManage={() => setManagementOpen(true)}
-        onSignOut={onSignOut}
+        onSignOut={handleSignOut}
         email={email}
         dataActionsDisabled={memberState.status !== "ready" || writePending}
       />
@@ -352,6 +452,11 @@ export default function App({ email, onSignOut }: AppProps) {
     setExpandedId(null);
     setConfirmState(null);
     setToast("회원이 숨김 처리되었습니다.");
+  }
+
+  async function handleSignOut() {
+    clearMemberWorkContext();
+    await onSignOut();
   }
 }
 

@@ -45,7 +45,7 @@ export function MemberEditor({
   useEffect(() => {
     setState(initialState(member, relations));
     setError("");
-  }, [member, relations]);
+  }, [member?.id]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

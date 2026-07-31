@@ -31,6 +31,7 @@ const management = read("src/components/ManagementPanel.tsx");
 const repository = read("src/lib/memberRepository.ts");
 const mapper = read("src/lib/memberMapper.ts");
 const client = read("src/lib/supabase.ts");
+const workContext = read("src/lib/workContext.ts");
 const migration = read(
   "supabase/migrations/20260718024656_phase3_members_access_hardening.sql"
 ).toLowerCase();
@@ -83,7 +84,45 @@ const sourceFiles = walk(join(root, "src"));
 for (const file of sourceFiles) {
   const content = readFileSync(file, "utf8");
   if (/localStorage\.setItem|indexedDB\.open|caches\.open/.test(content)) {
-    failures.push(`회원 데이터 영속 저장 가능성이 있음: ${relative(file)}`);
+    if (relative(file) !== "src/lib/workContext.ts") {
+      failures.push(`회원 데이터 영속 저장 가능성이 있음: ${relative(file)}`);
+    }
+  }
+}
+
+if (
+  !workContext.includes('const WORK_CONTEXT_KEY = "ngmembers.work-context.v1"') ||
+  !workContext.includes("WORK_CONTEXT_TTL_MS = 30 * 60 * 1000") ||
+  !workContext.includes("activeMemberId: string | null") ||
+  !workContext.includes("editorMemberId: string | null") ||
+  !workContext.includes("scrollY: number")
+) {
+  failures.push("30분 최소 UI 작업 컨텍스트 계약이 확인되지 않음");
+}
+
+for (const forbidden of [
+  "MemberRecord",
+  "MemberFormState",
+  "memberNumber",
+  "name",
+  "nickname",
+  "isAnchorMember",
+  "isFavorite",
+  "birthDate",
+  "phone",
+  "countryCode",
+  "cpf",
+  "notes",
+  "status",
+  "side",
+  "sponsorNameRaw",
+  "affiliationId",
+  "directParentId",
+  "directParentSide",
+  "email"
+]) {
+  if (workContext.includes(forbidden)) {
+    failures.push(`작업 컨텍스트에 회원 필드 저장 가능성이 있음: ${forbidden}`);
   }
 }
 

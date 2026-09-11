@@ -43,6 +43,8 @@ export const labels = {
       { value: "KR", label: "한국" },
       { value: "BR", label: "브라질" },
       { value: "MX", label: "멕시코" },
+      { value: "CL", label: "칠레" },
+      { value: "AR", label: "아르헨티나" },
       { value: "XX", label: "글로벌" }
     ]
   },

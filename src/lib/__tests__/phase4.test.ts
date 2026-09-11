@@ -30,7 +30,7 @@ test("주요 사용자 문구와 국가 선택지를 한 모듈에서 제공한�
   assert.equal(labels.search.placeholder, "이름·닉네임·회원번호·메모·전화번호");
   assert.deepEqual(
     labels.editor.countryOptions.map(({ value }) => value),
-    ["", "KR", "BR", "MX", "XX"]
+    ["", "KR", "BR", "MX", "CL", "AR", "XX"]
   );
 });
 
@@ -103,6 +103,8 @@ test("접힌 카드 요약은 코드, 펼친 카드 본문은 국가명으로 �
   assert.equal(countryLabel("BR", true), "BR");
   assert.equal(countryLabel("BR"), "브라질");
   assert.equal(countryLabel("KR"), "한국");
+  assert.equal(countryLabel("CL"), "칠레");
+  assert.equal(countryLabel("AR"), "아르헨티나");
   assert.equal(countryLabel("XX"), "글로벌");
   assert.equal(countryLabel(""), "국가 미확인");
   assert.deepEqual(formatMemberSubline(fakeMember({ countryCode: "XX" })), [
